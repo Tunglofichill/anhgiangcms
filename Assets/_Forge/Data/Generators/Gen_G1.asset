@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14856d139e7df654185a7d1fa10cf2d4, type: 3}
+  m_Name: Gen_G1
+  m_EditorClassIdentifier: Assembly-CSharp::Forge.GeneratorDefinition
+  id: G1
+  machineName: "Tay B\xFAa T\xED Hon"
+  description: 
+  baseCost: 15
+  baseOutput: 0.5
+  unlockOre: 0
+  unlockGenId: 
+  unlockLevel: 0
+  prefab: {fileID: 7472211256017799659, guid: bd0eeba2c782d634cafbb4867914a47f, type: 3}
+  icon: {fileID: 21300000, guid: 2f39ce0af4b750b4b8cd81477788b1bf, type: 3}
