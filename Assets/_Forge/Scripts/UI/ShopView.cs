@@ -32,6 +32,7 @@ namespace Forge
         public List<ShopRowView> upgradeRows = new List<ShopRowView>();
 
         private Action<string> _buyCallback;
+        public Action OnShopOpened;
         private ShopTab _currentTab = ShopTab.Machines;
 
         private static readonly Color ColorTabActiveBg = new Color(0.72f, 0.40f, 0.12f, 1f);
@@ -132,6 +133,7 @@ namespace Forge
 
             ApplyTabVisual(btnTabMachines, tab == ShopTab.Machines);
             ApplyTabVisual(btnTabUpgrades, tab == ShopTab.Upgrades);
+            OnShopOpened?.Invoke();
         }
 
         private void ApplyTabVisual(Button btn, bool isActive)
@@ -153,6 +155,7 @@ namespace Forge
         public void OpenShop()
         {
             if (panelShop != null) panelShop.SetActive(true);
+            OnShopOpened?.Invoke();
         }
 
         public void CloseShop()

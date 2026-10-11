@@ -293,6 +293,7 @@ namespace Forge.EditorTools
             Texture2D texWorkbench = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Workbench_Wood.png");
             Texture2D texDamascus = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Damascus_Steel.png");
             Texture2D texDarkIron = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Hammered_Dark_Iron.png");
+            Texture2D texBasalt = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Volcanic_Basalt.png");
             Texture2D texStone = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Stone_Bricks.png");
             Texture2D texEmbers = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Burning_Embers.png");
             Texture2D texBronze = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Polished_Bronze.png");
@@ -301,7 +302,7 @@ namespace Forge.EditorTools
 
             Texture2D texLeather = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Leather_Wrap.png");
 
-            Material CreateMat(string name, Color color, float metallic = 0f, float smoothness = 0.5f, Color? emission = null, Texture2D mainTex = null, Vector2? tiling = null, float envReflections = 1f)
+            Material CreateMat(string name, Color color, float metallic = 0f, float smoothness = 0.5f, Color? emission = null, Texture2D mainTex = null, Vector2? tiling = null, float envReflections = 0f)
             {
                 string path = $"{MATERIALS_DIR}/Mat_{name}.mat";
                 Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -315,7 +316,7 @@ namespace Forge.EditorTools
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
                 if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", metallic);
                 if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-                if (mat.HasProperty("_EnvironmentReflections")) mat.SetFloat("_EnvironmentReflections", envReflections);
+                if (mat.HasProperty("_EnvironmentReflections")) mat.SetFloat("_EnvironmentReflections", 0f);
 
                 if (mainTex != null)
                 {
@@ -328,28 +329,27 @@ namespace Forge.EditorTools
                     }
                 }
 
-                if (emission.HasValue)
+                if (emission.HasValue && emission.Value != Color.black)
                 {
                     mat.EnableKeyword("_EMISSION");
-                    mat.shaderKeywords = new string[] { "_EMISSION" };
                     if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", emission.Value);
                     mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 }
                 else
                 {
                     mat.DisableKeyword("_EMISSION");
-                    mat.shaderKeywords = new string[0];
                     if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", Color.black);
                     mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                 }
+                mat.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
                 EditorUtility.SetDirty(mat);
                 return mat;
             }
 
             // Warm Golden Honey Oak Master Workbench & Golden Cedar Floor (Matte finish to preserve 100% rich wood colors)
-            dict["Desk"] = CreateMat("Desk", new Color(0.85f, 0.68f, 0.48f), 0.00f, 0.08f, null, texWorkbench ?? texWood, new Vector2(2f, 1f), 0f);
-            dict["Floor"] = CreateMat("Floor", new Color(0.55f, 0.42f, 0.30f), 0.00f, 0.04f, null, texWorkbench ?? texWood, new Vector2(4f, 4f), 0f);
-            dict["Leather"] = CreateMat("Leather", new Color(0.45f, 0.20f, 0.12f), 0.00f, 0.15f, null, texLeather, new Vector2(2f, 2f), 0f);
+            dict["Desk"] = CreateMat("Desk", new Color(0.85f, 0.68f, 0.48f), 0.00f, 0.08f, null, texWorkbench ?? texWood, new Vector2(2f, 1f), 0.15f);
+            dict["Floor"] = CreateMat("Floor", new Color(0.55f, 0.42f, 0.30f), 0.00f, 0.04f, null, texWorkbench ?? texWood, new Vector2(4f, 4f), 0.15f);
+            dict["Leather"] = CreateMat("Leather", new Color(0.18f, 0.12f, 0.08f), 0.00f, 0.12f, null, texLeather, new Vector2(2f, 2f), 0.15f);
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Texture") ?? shader;
             string wallPath = $"{MATERIALS_DIR}/Mat_Wall.mat";
@@ -369,14 +369,14 @@ namespace Forge.EditorTools
             dict["Anvil"] = CreateMat("Anvil", new Color(0.55f, 0.58f, 0.62f), 0.30f, 0.35f, new Color(0.12f, 0.14f, 0.18f), texDarkIron ?? texWood, new Vector2(1.5f, 1.5f));
             dict["FurnaceEmber"] = CreateMat("FurnaceEmber", Color.white, 0.05f, 0.6f, new Color(1.0f, 0.45f, 0.08f) * 7.5f, texEmbers, new Vector2(1.5f, 1.5f));
 
-            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.88f, 0.94f, 1.0f), 0.35f, 0.65f, new Color(0.25f, 0.40f, 0.65f) * 0.8f, texDamascus, new Vector2(2f, 2f));
-            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.48f, 0.51f, 0.56f), 0.28f, 0.35f, new Color(0.12f, 0.14f, 0.18f), texDarkIron, new Vector2(2f, 2f));
-            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.72f, 0.74f, 0.76f), 0.00f, 0.05f, null, texStone, new Vector2(2f, 2f), 0f);
-            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.8f, new Color(1.0f, 0.52f, 0.12f) * 8.5f, texEmbers, new Vector2(1f, 1f));
-            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.15f, 0.75f, new Color(1.0f, 0.55f, 0.10f) * 9.5f, texHotIngot, new Vector2(1f, 1f));
-            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(1.0f, 0.85f, 0.15f), 0.40f, 0.65f, new Color(1.0f, 0.75f, 0.15f) * 2.8f, texBronze, new Vector2(1.5f, 1.5f));
-            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", new Color(0.00f, 0.92f, 1.0f), 0.00f, 0.20f, new Color(0.00f, 0.95f, 1.0f) * 4.5f, texCrystal, new Vector2(1f, 1f), 0f);
-            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.70f, 0.48f, 0.30f), 0.00f, 0.08f, null, texOakStump, new Vector2(1.5f, 1.5f), 0f);
+            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.92f, 0.96f, 1.0f), 0.35f, 0.70f, null, texDamascus, new Vector2(2f, 2f));
+            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.26f, 0.28f, 0.32f), 0.25f, 0.45f, null, texDarkIron, new Vector2(2f, 2f));
+            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.68f, 0.72f, 0.78f), 0.04f, 0.15f, null, texBasalt ?? texStone, new Vector2(2.5f, 2.5f));
+            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.80f, new Color(1.0f, 0.52f, 0.06f) * 8.5f, texEmbers, new Vector2(1f, 1f));
+            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.10f, 0.75f, new Color(1.0f, 0.46f, 0.05f) * 8.0f, texHotIngot, new Vector2(1f, 1f));
+            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(1.0f, 0.86f, 0.20f), 0.30f, 0.65f, null, texBronze, new Vector2(1.5f, 1.5f));
+            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", new Color(0.00f, 0.92f, 1.0f), 0.05f, 0.88f, new Color(0.00f, 0.95f, 1.0f) * 1.5f, texCrystal, new Vector2(1f, 1f));
+            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.70f, 0.48f, 0.30f), 0.00f, 0.08f, null, texOakStump, new Vector2(1.5f, 1.5f));
 
             // Greybox machine colors
             dict["G1"] = CreateMat("G1", new Color(0.85f, 0.64f, 0.25f), 0.5f, 0.5f);
@@ -425,17 +425,19 @@ namespace Forge.EditorTools
 
             var gData = new[]
             {
-                new { id = "G1", name = "Tay Búa Tí Hon", cost = 15.0, outVal = 0.5, unlOre = 0.0, unlGen = "", unlLv = 0 },
-                new { id = "G2", name = "Cúi Đào Quặng", cost = 100.0, outVal = 2.0, unlOre = 50.0, unlGen = "G1", unlLv = 1 },
-                new { id = "G3", name = "Lò Than Tự Đun", cost = 750.0, outVal = 8.0, unlOre = 0.0, unlGen = "G2", unlLv = 10 },
-                new { id = "G4", name = "Cối Xay Kim", cost = 6000.0, outVal = 40.0, unlOre = 0.0, unlGen = "G3", unlLv = 10 },
-                new { id = "G5", name = "Robot Thợ Cả", cost = 50000.0, outVal = 200.0, unlOre = 0.0, unlGen = "G4", unlLv = 10 }
+                new { id = "G1", name = "Tay Búa Tí Hon", cost = 15.0, outVal = 0.5, unlOre = 0.0, unlGen = "", unlLv = 0, iconPath = "Assets/_Forge/Art/Textures/Icons/Icon_G1_Hammer.png" },
+                new { id = "G2", name = "Cũi Đào Quặng", cost = 100.0, outVal = 2.0, unlOre = 50.0, unlGen = "G1", unlLv = 1, iconPath = "Assets/_Forge/Art/Textures/Icons/Icon_G2_Drill.png" },
+                new { id = "G3", name = "Lò Than Tự Đun", cost = 750.0, outVal = 8.0, unlOre = 0.0, unlGen = "G2", unlLv = 10, iconPath = "Assets/_Forge/Art/Textures/Icons/Icon_G3_Stove.png" },
+                new { id = "G4", name = "Cối Xay Kim", cost = 6000.0, outVal = 40.0, unlOre = 0.0, unlGen = "G3", unlLv = 10, iconPath = "Assets/_Forge/Art/Textures/Icons/Icon_G4_Gear.png" },
+                new { id = "G5", name = "Robot Thợ Cả", cost = 50000.0, outVal = 200.0, unlOre = 0.0, unlGen = "G4", unlLv = 10, iconPath = "Assets/_Forge/Art/Textures/Icons/Icon_G5_Robot.png" }
             };
 
             foreach (var item in gData)
             {
                 string path = $"{GENERATORS_DIR}/Gen_{item.id}.asset";
                 var def = AssetDatabase.LoadAssetAtPath<GeneratorDefinition>(path);
+                Sprite spIcon = AssetDatabase.LoadAssetAtPath<Sprite>(item.iconPath);
+
                 if (def == null)
                 {
                     def = ScriptableObject.CreateInstance<GeneratorDefinition>();
@@ -446,6 +448,7 @@ namespace Forge.EditorTools
                     def.unlockOre = item.unlOre;
                     def.unlockGenId = item.unlGen;
                     def.unlockLevel = item.unlLv;
+                    if (spIcon != null) def.icon = spIcon;
 
                     if (machinePrefabs != null && machinePrefabs.TryGetValue(item.id, out var p))
                     {
@@ -456,11 +459,19 @@ namespace Forge.EditorTools
                 }
                 else
                 {
+                    def.machineName = item.name;
+                    def.baseCost = item.cost;
+                    def.baseOutput = item.outVal;
+                    def.unlockOre = item.unlOre;
+                    def.unlockGenId = item.unlGen;
+                    def.unlockLevel = item.unlLv;
+                    if (spIcon != null) def.icon = spIcon;
+
                     if (machinePrefabs != null && machinePrefabs.TryGetValue(item.id, out var p))
                     {
                         def.prefab = p;
-                        EditorUtility.SetDirty(def);
                     }
+                    EditorUtility.SetDirty(def);
                 }
                 list.Add(def);
             }
@@ -503,121 +514,127 @@ namespace Forge.EditorTools
             // 2. [World]
             GameObject goWorld = new GameObject("[World]");
 
-            // 2.1 Lighting & Atmosphere (Balanced Fantasy Ambience: Natural stone, rich honey oak, vibrant glowing cyan arcane crystals & fiery forge)
+            // 2.1 Lighting & Atmosphere (Balanced Fantasy Ambience: Natural basalt, warm honey oak, vibrant glowing cyan arcane crystals & fiery forge)
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.68f, 0.72f, 0.82f) * 0.65f;
-            RenderSettings.ambientEquatorColor = new Color(0.72f, 0.62f, 0.52f) * 0.55f;
-            RenderSettings.ambientGroundColor = new Color(0.32f, 0.25f, 0.20f) * 0.45f;
+            RenderSettings.ambientSkyColor = new Color(0.65f, 0.70f, 0.78f) * 0.70f;
+            RenderSettings.ambientEquatorColor = new Color(0.50f, 0.48f, 0.45f) * 0.50f;
+            RenderSettings.ambientGroundColor = new Color(0.28f, 0.25f, 0.22f) * 0.40f;
 
             GameObject goLighting = new GameObject("Lighting");
             goLighting.transform.SetParent(goWorld.transform);
 
-            // Reflection Probe: Subtle intensity so metallic shaders retain rich gold/steel tint without grey skies
-            GameObject goProbe = new GameObject("ReflectionProbe");
-            goProbe.transform.SetParent(goLighting.transform);
-            goProbe.transform.position = new Vector3(0f, 1.3f, 0f);
-            var probe = goProbe.AddComponent<ReflectionProbe>();
-            probe.mode = ReflectionProbeMode.Realtime;
-            probe.refreshMode = ReflectionProbeRefreshMode.OnAwake;
-            probe.size = new Vector3(10f, 6f, 10f);
-            probe.intensity = 0.06f;
 
-            // Sun_Key: High-angled key light illuminating workbench top, anvil face & hearth with warm golden sunlight
+
+            // Sun_Key: High-angled key light shining from FRONT-LEFT (x=-1.8, y=3.6, z=-2.8) towards back-right (+X, +Z)
+            // Illuminates the anvil, desk table, 24K gold bullion bars, and the front facade of the furnace and golden crest!
             GameObject goSun = new GameObject("Sun_Key");
             goSun.transform.SetParent(goLighting.transform);
             goSun.transform.position = new Vector3(-1.8f, 3.6f, -2.8f);
-            goSun.transform.rotation = Quaternion.Euler(38f, -24f, 0f);
+            goSun.transform.rotation = Quaternion.Euler(32f, 24f, 0f);
             Light sunLight = goSun.AddComponent<Light>();
             sunLight.type = LightType.Directional;
-            sunLight.color = new Color(1.0f, 0.96f, 0.88f);
+            sunLight.color = new Color(1.0f, 0.98f, 0.92f);
             sunLight.intensity = 1.05f;
             sunLight.shadows = LightShadows.Soft;
-            sunLight.shadowStrength = 0.45f;
+            sunLight.shadowStrength = 0.35f;
+            sunLight.shadowBias = 0.20f;
+            sunLight.shadowNormalBias = 0.50f;
+            sunLight.shadowResolution = UnityEngine.Rendering.LightShadowResolution.VeryHigh;
 
-            // Fill_Soft: Soft cool front-right fill creating painterly fantasy contrast without washing out diffuse color
+            // Fill_Soft: Soft warm front-right fill creating painterly fantasy contrast without washing out diffuse color
             GameObject goFill = new GameObject("Fill_Soft");
             goFill.transform.SetParent(goLighting.transform);
             goFill.transform.position = new Vector3(2.2f, 2.8f, -2.5f);
-            goFill.transform.rotation = Quaternion.Euler(24f, 32f, 0f);
+            goFill.transform.rotation = Quaternion.Euler(22f, -35f, 0f);
             Light fillLight = goFill.AddComponent<Light>();
             fillLight.type = LightType.Directional;
-            fillLight.color = new Color(0.82f, 0.85f, 0.92f);
-            fillLight.intensity = 0.30f;
+            fillLight.color = new Color(1.0f, 0.92f, 0.82f);
+            fillLight.intensity = 0.28f;
             fillLight.shadows = LightShadows.None;
 
             // Rim_Cool: Gentle contour rim separating hero props from background
             GameObject goRim = new GameObject("Rim_Cool");
             goRim.transform.SetParent(goLighting.transform);
             goRim.transform.position = new Vector3(1.5f, 3.2f, 2.6f);
-            goRim.transform.rotation = Quaternion.Euler(48f, 135f, 0f);
+            goRim.transform.rotation = Quaternion.Euler(45f, 140f, 0f);
             Light rimLight = goRim.AddComponent<Light>();
             rimLight.type = LightType.Directional;
-            rimLight.color = new Color(0.55f, 0.70f, 0.95f);
-            rimLight.intensity = 0.25f;
+            rimLight.color = new Color(0.72f, 0.82f, 0.95f);
+            rimLight.intensity = 0.20f;
             rimLight.shadows = LightShadows.None;
 
-            // Dedicated Desk Specular Point Light: Soft neutral-warm illumination directly spotlighting hero craft materials
+            // Dedicated Desk Specular Point Light: Soft neutral-warm illumination gently highlighting Damascus steel & dagger (x = -0.15m)
             GameObject goDeskLight = new GameObject("Desk_Specular_Point");
             goDeskLight.transform.SetParent(goLighting.transform);
-            goDeskLight.transform.position = new Vector3(0.00f, 1.45f, -0.15f);
+            goDeskLight.transform.position = new Vector3(-0.15f, 1.15f, -0.08f);
             Light deskLight = goDeskLight.AddComponent<Light>();
             deskLight.type = LightType.Point;
-            deskLight.color = new Color(1.0f, 0.95f, 0.85f);
-            deskLight.intensity = 0.35f;
-            deskLight.range = 2.4f;
+            deskLight.color = new Color(1.0f, 0.96f, 0.88f);
+            deskLight.intensity = 0.15f;
+            deskLight.range = 0.70f;
 
-            // Arcane Crystal Point Light: Brilliant radiant Cyan glow tightly focused on the 5 crystal spires
+            // Arcane Crystal Point Light: Brilliant radiant Cyan glow tightly focused on the 5 crystal spires on the left (x = -0.65m)
             GameObject goCrystalLight = new GameObject("Crystal_Arcane_Point");
             goCrystalLight.transform.SetParent(goLighting.transform);
-            goCrystalLight.transform.position = new Vector3(-0.21f, 1.15f, 0.00f);
+            goCrystalLight.transform.position = new Vector3(-0.65f, 1.15f, 0.00f);
             Light crystalLight = goCrystalLight.AddComponent<Light>();
             crystalLight.type = LightType.Point;
-            crystalLight.color = new Color(0.05f, 0.95f, 1.0f);
-            crystalLight.intensity = 1.5f;
-            crystalLight.range = 0.60f;
+            crystalLight.color = new Color(0.00f, 0.95f, 1.0f);
+            crystalLight.intensity = 0.32f;
+            crystalLight.range = 0.38f;
 
-            // Dedicated 24K Gold Bullion Point Light: Rich warm golden radiance illuminating gold ingots & dagger crossguard
+            // Dedicated 24K Gold Bullion Point Light: Warm radiant golden shimmer for gold bullion bars (x = +0.30m)
             GameObject goGoldLight = new GameObject("Gold_Bullion_Point");
             goGoldLight.transform.SetParent(goLighting.transform);
-            goGoldLight.transform.position = new Vector3(0.18f, 1.02f, -0.05f);
+            goGoldLight.transform.position = new Vector3(0.30f, 1.05f, -0.06f);
             Light goldLight = goGoldLight.AddComponent<Light>();
             goldLight.type = LightType.Point;
-            goldLight.color = new Color(1.0f, 0.85f, 0.20f);
-            goldLight.intensity = 1.4f;
-            goldLight.range = 0.70f;
+            goldLight.color = new Color(1.0f, 0.88f, 0.25f);
+            goldLight.intensity = 0.35f;
+            goldLight.range = 0.40f;
 
-            // Hot Billet Micro Glow Point Light: Fiery red-orange magma glow right at the tongs jaws
+            // Dedicated Royal Hammer Crest Point Light: Brings the 3D gold hammer crest medallion on the furnace to brilliant life!
+            GameObject goCrestLight = new GameObject("Furnace_Crest_Point");
+            goCrestLight.transform.SetParent(goLighting.transform);
+            goCrestLight.transform.position = new Vector3(1.85f, 2.05f, 0.15f);
+            Light crestLight = goCrestLight.AddComponent<Light>();
+            crestLight.type = LightType.Point;
+            crestLight.color = new Color(1.0f, 0.88f, 0.35f);
+            crestLight.intensity = 0.50f;
+            crestLight.range = 0.60f;
+
+            // Hot Billet Micro Glow Point Light: Fiery red-orange magma glow at tongs jaws (x = +0.76m)
             GameObject goHotLight = new GameObject("HotBillet_Point");
             goHotLight.transform.SetParent(goLighting.transform);
-            goHotLight.transform.position = new Vector3(-0.16f, 0.88f, 0.11f);
+            goHotLight.transform.position = new Vector3(0.76f, 0.95f, -0.08f);
             Light hotLight = goHotLight.AddComponent<Light>();
             hotLight.type = LightType.Point;
-            hotLight.color = new Color(1.0f, 0.42f, 0.05f);
-            hotLight.intensity = 1.0f;
-            hotLight.range = 0.50f;
+            hotLight.color = new Color(1.0f, 0.48f, 0.10f);
+            hotLight.intensity = 0.24f;
+            hotLight.range = 0.35f;
 
-            // Furnace_Point: placed deep in the combustion chamber (vibrant fiery magma glow contained in hearth)
+            // Furnace_Point: Placed deeply inside hearth firebox (x = 1.95m, y = 1.05m, z = 0.40f)
             GameObject goFurnacePoint = new GameObject("Furnace_Point");
             goFurnacePoint.transform.SetParent(goLighting.transform);
-            goFurnacePoint.transform.position = new Vector3(1.05f, 1.02f, 0.04f);
+            goFurnacePoint.transform.position = new Vector3(1.95f, 1.05f, 0.40f);
             Light furnaceLight = goFurnacePoint.AddComponent<Light>();
             furnaceLight.type = LightType.Point;
-            furnaceLight.color = new Color(1.0f, 0.48f, 0.08f);
-            furnaceLight.intensity = 1.6f;
-            furnaceLight.range = 1.15f;
-            furnaceLight.shadows = LightShadows.Soft;
+            furnaceLight.color = new Color(1.0f, 0.48f, 0.10f);
+            furnaceLight.intensity = 0.80f;
+            furnaceLight.range = 0.85f;
+            furnaceLight.shadows = LightShadows.None;
 
             var flicker = goFurnacePoint.AddComponent<Forge.FX.FurnaceFlickerLight>();
             flicker.targetLight = furnaceLight;
-            flicker.minIntensity = 1.4f;
-            flicker.maxIntensity = 2.1f;
+            flicker.minIntensity = 0.60f;
+            flicker.maxIntensity = 0.85f;
             flicker.flickerSpeed = 3.5f;
 
             var lightCtrl = goLighting.AddComponent<ForgeLightController>();
             lightCtrl.furnacePointLight = furnaceLight;
-            lightCtrl.defaultBaseIntensity = 1.8f;
-            lightCtrl.upgradedBaseIntensity = 2.4f;
+            lightCtrl.defaultBaseIntensity = 0.70f;
+            lightCtrl.upgradedBaseIntensity = 1.10f;
 
             // 2.2 Environment
             GameObject goEnv = new GameObject("Environment");
@@ -650,13 +667,8 @@ namespace Forge.EditorTools
             GameObject goDesk = Forge3DBuilder.BuildHeroWorkbench(goEnv.transform, new Vector3(0f, 0.40f, 0f), Quaternion.identity, mats);
             goDesk.name = "Desk";
 
-            // Contact Shadows beneath heavy props (Gently grounds props to table, eliminates floating)
-            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(-0.72f, 0.803f, -0.05f), new Vector2(0.95f, 0.75f), 0.60f);
-            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(1.05f, 0.803f, 0.05f), new Vector2(1.35f, 1.15f), 0.65f);
-            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(0.00f, 0.803f, -0.06f), new Vector2(0.95f, 0.60f), 0.50f);
-
             // 3D Hero Anvil (Sculpted 3D Oak Stump, Base, Waist, Steel Face, Horn, Heel & Glowing Ingot)
-            GameObject goAnvil = Forge3DBuilder.BuildHeroAnvil(goEnv.transform, new Vector3(-0.72f, 0.80f, -0.05f), Quaternion.Euler(0f, 18f, 0f), mats);
+            GameObject goAnvil = Forge3DBuilder.BuildHeroAnvil(goEnv.transform, new Vector3(-1.25f, 0.80f, -0.05f), Quaternion.Euler(0f, 18f, 0f), mats);
             goAnvil.name = "Anvil";
             goAnvil.layer = clickableLayer;
 
@@ -667,22 +679,26 @@ namespace Forge.EditorTools
 
             var clickAnvil = goAnvil.AddComponent<ClickForge>();
 
-            // 3D Interactive Smith Hammer (Búa Rèn 3D vung đập khi click)
-            GameObject goHammer = Forge3DBuilder.BuildHeroHammer(goEnv.transform, new Vector3(-1.38f, 0.82f, -0.05f), Quaternion.Euler(30f, 22f, -20f), mats);
+            // 3D Interactive Smith Hammer (Búa Rèn 3D vung đập khi click - Configured by User at y=1.353m)
+            GameObject goHammer = Forge3DBuilder.BuildHeroHammer(goEnv.transform, new Vector3(-1.727f, 1.353f, -0.105f), new Quaternion(0.2181994f, 0.22562504f, -0.21328433f, 0.9251985f), mats);
 
             // 3D Polished Workshop Materials & Tools on workbench (Thỏi thép mài bóng, thỏi vàng, tinh thể quặng phát sáng, dao găm thần binh, kìm rèn)
-            GameObject goDeskProps = Forge3DBuilder.BuildHeroDeskProps(goEnv.transform, new Vector3(0.00f, 0.80f, -0.06f), Quaternion.Euler(0f, 4f, 0f), mats);
+            GameObject goDeskProps = Forge3DBuilder.BuildHeroDeskProps(goEnv.transform, new Vector3(0.00f, 0.80f, -0.06f), Quaternion.identity, mats);
             goDeskProps.name = "Hero_Desk_Props";
 
-            // 3D Hero Furnace (Stone Masonry Hearth, Arched Chamber, Fiery Embers & Chimney Stack)
-            GameObject goFurnace = Forge3DBuilder.BuildHeroFurnace(goEnv.transform, new Vector3(1.05f, 0.80f, 0.05f), Quaternion.Euler(0f, -24f, 0f), mats);
+            // 3D Masterpiece Weapon Rack with 3 Hero Swords standing majestically behind the workbench
+            GameObject goBehindSwords = Forge3DBuilder.BuildBehindSwordRack(goEnv.transform, new Vector3(0.00f, 0.80f, 0.55f), Quaternion.identity, mats);
+            goBehindSwords.name = "Behind_Sword_Rack";
+
+            // 3D Hero Furnace (Monumental Dwarven Basalt Blast Furnace rising from floor y=0 to y=2.95m - Configured by User at 34.035 deg)
+            GameObject goFurnace = Forge3DBuilder.BuildHeroFurnace(goEnv.transform, new Vector3(1.95f, 0.00f, 0.40f), Quaternion.Euler(0f, 34.035f, 0f), mats);
             goFurnace.name = "Furnace";
             goFurnace.tag = "Furnace";
             goFurnace.layer = clickableLayer;
 
             var boxFurnace = goFurnace.AddComponent<BoxCollider>();
-            boxFurnace.size = new Vector3(1.30f, 1.85f, 1.30f);
-            boxFurnace.center = new Vector3(0f, 0.90f, 0f);
+            boxFurnace.size = new Vector3(1.60f, 2.95f, 1.50f);
+            boxFurnace.center = new Vector3(0f, 1.45f, 0f);
 
             var furnaceVisual = goFurnace.AddComponent<FurnaceVisual>();
             furnaceVisual.visualTransform = goFurnace.transform;
@@ -948,13 +964,13 @@ namespace Forge.EditorTools
             AssetDatabase.SaveAssets();
             vol.profile = profile;
 
-            // Wire ClickForge (Furnace and Anvil)
-            clickForge.cameraPunch = camPunch;
+            // Wire ClickForge (Furnace and Anvil) - Camera punch disabled for 100% stable view
+            clickForge.cameraPunch = null;
             clickForge.lightController = lightCtrl;
             clickForge.audioService = audioService;
             clickForge.worldView = worldView;
 
-            clickAnvil.cameraPunch = camPunch;
+            clickAnvil.cameraPunch = null;
             clickAnvil.lightController = lightCtrl;
             clickAnvil.audioService = audioService;
             clickAnvil.worldView = worldView;
@@ -963,6 +979,12 @@ namespace Forge.EditorTools
 
             // 3. [UI] / Canvas
             SetupUI(gameManager);
+
+            // Disable all reflection probes across scene to keep metals 100% true to stylized fantasy PBR colors
+            foreach (var r in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            }
 
             // Save Scene
             EditorSceneManager.SaveScene(scene, SCENE_PATH);
@@ -1308,451 +1330,10 @@ namespace Forge.EditorTools
             hudView.txtShopBadge = txtBadge;
             goBadge.SetActive(false);
 
-            // --- PanelShop: height 490 ---
-            GameObject goPanelShop = new GameObject("PanelShop");
-            goPanelShop.transform.SetParent(goCanvas.transform, false);
-            var imgPanelShop = goPanelShop.AddComponent<Image>();
-            imgPanelShop.color = new Color(0.12f, 0.12f, 0.16f, 0.95f);
-            var rtPanelShop = goPanelShop.GetComponent<RectTransform>();
-            rtPanelShop.anchorMin = new Vector2(0.5f, 0f);
-            rtPanelShop.anchorMax = new Vector2(0.5f, 0f);
-            rtPanelShop.pivot = new Vector2(0.5f, 0f);
-            rtPanelShop.anchoredPosition = new Vector2(0f, 110f);
-            rtPanelShop.sizeDelta = new Vector2(1150f, 490f);
-
-            // BtnCloseShop
-            GameObject goBtnClose = new GameObject("BtnCloseShop");
-            goBtnClose.transform.SetParent(goPanelShop.transform, false);
-            var imgClose = goBtnClose.AddComponent<Image>();
-            imgClose.color = new Color(0.75f, 0.22f, 0.22f);
-            var btnClose = goBtnClose.AddComponent<Button>();
-            var rtClose = goBtnClose.GetComponent<RectTransform>();
-            rtClose.anchorMin = new Vector2(1f, 1f);
-            rtClose.anchorMax = new Vector2(1f, 1f);
-            rtClose.pivot = new Vector2(1f, 1f);
-            rtClose.anchoredPosition = new Vector2(-12f, -12f);
-            rtClose.sizeDelta = new Vector2(44f, 44f);
-
-            GameObject goCloseTxt = new GameObject("X");
-            goCloseTxt.transform.SetParent(goBtnClose.transform, false);
-            var txtClose = goCloseTxt.AddComponent<Text>();
-            txtClose.font = defaultFont;
-            txtClose.fontSize = 24;
-            txtClose.fontStyle = FontStyle.Bold;
-            txtClose.alignment = TextAnchor.MiddleCenter;
-            txtClose.color = Color.white;
-            txtClose.text = "X";
-            var rtCloseTxt = goCloseTxt.GetComponent<RectTransform>();
-            rtCloseTxt.anchorMin = Vector2.zero;
-            rtCloseTxt.anchorMax = Vector2.one;
-            rtCloseTxt.sizeDelta = Vector2.zero;
-
-            // Title Shop
-            GameObject goShopTitle = new GameObject("Title");
-            goShopTitle.transform.SetParent(goPanelShop.transform, false);
-            var txtShopTitle = goShopTitle.AddComponent<Text>();
-            txtShopTitle.font = defaultFont;
-            txtShopTitle.fontSize = 32;
-            txtShopTitle.fontStyle = FontStyle.Bold;
-            txtShopTitle.color = new Color(1.0f, 0.85f, 0.45f);
-            txtShopTitle.text = "CÔNG XƯỞNG TỰ ĐỘNG HÓA";
-            var rtShopTitle = goShopTitle.GetComponent<RectTransform>();
-            rtShopTitle.anchorMin = new Vector2(0f, 1f);
-            rtShopTitle.anchorMax = new Vector2(0f, 1f);
-            rtShopTitle.pivot = new Vector2(0f, 1f);
-            rtShopTitle.anchoredPosition = new Vector2(25f, -14f);
-            rtShopTitle.sizeDelta = new Vector2(350f, 42f);
-
-            // Tab 1: Machines
-            GameObject goTabM = new GameObject("BtnTabMachines", typeof(RectTransform), typeof(Image), typeof(Button));
-            goTabM.transform.SetParent(goPanelShop.transform, false);
-            var imgTabM = goTabM.GetComponent<Image>();
-            imgTabM.color = new Color(0.72f, 0.40f, 0.12f, 1f);
-            var btnTabM = goTabM.GetComponent<Button>();
-            var rtTabM = goTabM.GetComponent<RectTransform>();
-            rtTabM.anchorMin = new Vector2(0f, 1f);
-            rtTabM.anchorMax = new Vector2(0f, 1f);
-            rtTabM.pivot = new Vector2(0f, 1f);
-            rtTabM.anchoredPosition = new Vector2(380f, -10f);
-            rtTabM.sizeDelta = new Vector2(240f, 40f);
-
-            GameObject goTxtTabM = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
-            goTxtTabM.transform.SetParent(goTabM.transform, false);
-            var tTabM = goTxtTabM.GetComponent<Text>();
-            tTabM.font = defaultFont;
-            tTabM.fontSize = 20;
-            tTabM.fontStyle = FontStyle.Bold;
-            tTabM.alignment = TextAnchor.MiddleCenter;
-            tTabM.color = new Color(1.0f, 0.95f, 0.80f);
-            tTabM.text = "⚙️ DÂY CHUYỀN MÁY";
-            var rtTM = goTxtTabM.GetComponent<RectTransform>();
-            rtTM.anchorMin = Vector2.zero; rtTM.anchorMax = Vector2.one; rtTM.sizeDelta = Vector2.zero;
-            var outTM = goTxtTabM.GetComponent<Outline>();
-            outTM.effectColor = new Color(0.1f, 0.05f, 0.02f, 0.8f);
-            outTM.effectDistance = new Vector2(1f, -1f);
-
-            // Tab 2: Upgrades
-            GameObject goTabU = new GameObject("BtnTabUpgrades", typeof(RectTransform), typeof(Image), typeof(Button));
-            goTabU.transform.SetParent(goPanelShop.transform, false);
-            var imgTabU = goTabU.GetComponent<Image>();
-            imgTabU.color = new Color(0.18f, 0.22f, 0.30f, 0.9f);
-            var btnTabU = goTabU.GetComponent<Button>();
-            var rtTabU = goTabU.GetComponent<RectTransform>();
-            rtTabU.anchorMin = new Vector2(0f, 1f);
-            rtTabU.anchorMax = new Vector2(0f, 1f);
-            rtTabU.pivot = new Vector2(0f, 1f);
-            rtTabU.anchoredPosition = new Vector2(630f, -10f);
-            rtTabU.sizeDelta = new Vector2(240f, 40f);
-
-            GameObject goTxtTabU = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
-            goTxtTabU.transform.SetParent(goTabU.transform, false);
-            var tTabU = goTxtTabU.GetComponent<Text>();
-            tTabU.font = defaultFont;
-            tTabU.fontSize = 20;
-            tTabU.fontStyle = FontStyle.Bold;
-            tTabU.alignment = TextAnchor.MiddleCenter;
-            tTabU.color = new Color(0.65f, 0.72f, 0.82f);
-            tTabU.text = "🔨 BÚA & LÒ NUNG";
-            var rtTU = goTxtTabU.GetComponent<RectTransform>();
-            rtTU.anchorMin = Vector2.zero; rtTU.anchorMax = Vector2.one; rtTU.sizeDelta = Vector2.zero;
-            var outTU = goTxtTabU.GetComponent<Outline>();
-            outTU.effectColor = new Color(0.05f, 0.05f, 0.1f, 0.8f);
-            outTU.effectDistance = new Vector2(1f, -1f);
-
-            // Shop Rows Container (Machines)
-            GameObject goShopList = new GameObject("ContainerMachines");
-            goShopList.transform.SetParent(goPanelShop.transform, false);
-            var rtShopList = goShopList.AddComponent<RectTransform>();
-            rtShopList.anchorMin = new Vector2(0f, 0f);
-            rtShopList.anchorMax = new Vector2(1f, 1f);
-            rtShopList.offsetMin = new Vector2(20f, 15f);
-            rtShopList.offsetMax = new Vector2(-20f, -62f);
-
-            // Upgrades Container
-            GameObject goUpgradeList = new GameObject("ContainerUpgrades");
-            goUpgradeList.transform.SetParent(goPanelShop.transform, false);
-            var rtUpgradeList = goUpgradeList.AddComponent<RectTransform>();
-            rtUpgradeList.anchorMin = new Vector2(0f, 0f);
-            rtUpgradeList.anchorMax = new Vector2(1f, 1f);
-            rtUpgradeList.offsetMin = new Vector2(20f, 15f);
-            rtUpgradeList.offsetMax = new Vector2(-20f, -62f);
-            goUpgradeList.SetActive(false);
-
-            var shopView = goCanvas.AddComponent<ShopView>();
-            shopView.panelShop = goPanelShop;
-            shopView.btnOpenShop = btnShop;
-            shopView.btnCloseShop = btnClose;
-            shopView.txtShopTitle = txtShopTitle;
-            shopView.btnTabMachines = btnTabM;
-            shopView.btnTabUpgrades = btnTabU;
-            shopView.containerMachines = goShopList;
-            shopView.containerUpgrades = goUpgradeList;
-
-            // Generate 5 Rows with LARGE, CLEAR FONT and crisp layout
-            string[] gNames = new[] { "Tay Búa Tí Hon", "Cũi Đào Quặng", "Lò Than Tự Đun", "Cối Xay Kim", "Robot Thợ Cả" };
-            for (int i = 0; i < 5; i++)
-            {
-                GameObject goRow = new GameObject($"Row_G{i + 1}");
-                goRow.transform.SetParent(goShopList.transform, false);
-                var imgRow = goRow.AddComponent<Image>();
-                imgRow.color = new Color(0.18f, 0.18f, 0.24f, 0.90f);
-                var rtRow = goRow.GetComponent<RectTransform>();
-                rtRow.anchorMin = new Vector2(0f, 1f);
-                rtRow.anchorMax = new Vector2(1f, 1f);
-                rtRow.pivot = new Vector2(0.5f, 1f);
-                rtRow.anchoredPosition = new Vector2(0f, -(i * 78f));
-                rtRow.sizeDelta = new Vector2(0f, 72f);
-
-                var rowView = goRow.AddComponent<ShopRowView>();
-
-                // Icon image preview
-                GameObject goIcon = new GameObject("ImgIcon");
-                goIcon.transform.SetParent(goRow.transform, false);
-                var imgIcon = goIcon.AddComponent<Image>();
-                imgIcon.preserveAspect = true;
-                var rtIcon = goIcon.GetComponent<RectTransform>();
-                rtIcon.anchorMin = new Vector2(0f, 0.5f);
-                rtIcon.anchorMax = new Vector2(0f, 0.5f);
-                rtIcon.pivot = new Vector2(0f, 0.5f);
-                rtIcon.anchoredPosition = new Vector2(14f, 0f);
-                rtIcon.sizeDelta = new Vector2(56f, 56f);
-
-                // Name (Large & Bold: 26pt)
-                GameObject goName = new GameObject("TxtName", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goName.transform.SetParent(goRow.transform, false);
-                var tName = goName.GetComponent<Text>();
-                tName.font = defaultFont;
-                tName.fontSize = 26;
-                tName.fontStyle = FontStyle.Bold;
-                tName.alignment = TextAnchor.MiddleLeft;
-                tName.color = Color.white;
-                tName.text = gNames[i];
-                var rtN = goName.GetComponent<RectTransform>();
-                rtN.anchorMin = new Vector2(0f, 0.5f);
-                rtN.anchorMax = new Vector2(0f, 0.5f);
-                rtN.pivot = new Vector2(0f, 0.5f);
-                rtN.anchoredPosition = new Vector2(80f, 12f);
-                rtN.sizeDelta = new Vector2(260f, 32f);
-                var outName = goName.GetComponent<Outline>();
-                outName.effectColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
-                outName.effectDistance = new Vector2(1f, -1f);
-
-                // Level (20pt)
-                GameObject goLv = new GameObject("TxtLevel", typeof(RectTransform), typeof(Text));
-                goLv.transform.SetParent(goRow.transform, false);
-                var tLv = goLv.GetComponent<Text>();
-                tLv.font = defaultFont;
-                tLv.fontSize = 20;
-                tLv.color = new Color(0.70f, 0.75f, 0.85f);
-                tLv.text = "Cấp: 0";
-                var rtLv = goLv.GetComponent<RectTransform>();
-                rtLv.anchorMin = new Vector2(0f, 0.5f);
-                rtLv.anchorMax = new Vector2(0f, 0.5f);
-                rtLv.pivot = new Vector2(0f, 0.5f);
-                rtLv.anchoredPosition = new Vector2(80f, -16f);
-                rtLv.sizeDelta = new Vector2(220f, 26f);
-
-                // Output (24pt Bold Emerald)
-                GameObject goOut = new GameObject("TxtOutput", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goOut.transform.SetParent(goRow.transform, false);
-                var tOut = goOut.GetComponent<Text>();
-                tOut.font = defaultFont;
-                tOut.fontSize = 24;
-                tOut.fontStyle = FontStyle.Bold;
-                tOut.alignment = TextAnchor.MiddleLeft;
-                tOut.color = new Color(0.40f, 0.95f, 0.55f);
-                tOut.text = "+0/s";
-                var rtOut = goOut.GetComponent<RectTransform>();
-                rtOut.anchorMin = new Vector2(0f, 0.5f);
-                rtOut.anchorMax = new Vector2(0f, 0.5f);
-                rtOut.pivot = new Vector2(0f, 0.5f);
-                rtOut.anchoredPosition = new Vector2(350f, 0f);
-                rtOut.sizeDelta = new Vector2(160f, 32f);
-                var outOut = goOut.GetComponent<Outline>();
-                outOut.effectColor = new Color(0.04f, 0.12f, 0.04f, 0.9f);
-                outOut.effectDistance = new Vector2(1f, -1f);
-
-                // Cost / Unlock text (Anchored to right, 390px wide with BestFit, safely 15px away from BtnBuy)
-                GameObject goCost = new GameObject("TxtCost", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goCost.transform.SetParent(goRow.transform, false);
-                var tCost = goCost.GetComponent<Text>();
-                tCost.font = defaultFont;
-                tCost.fontSize = 22;
-                tCost.fontStyle = FontStyle.Bold;
-                tCost.alignment = TextAnchor.MiddleRight;
-                tCost.resizeTextForBestFit = true;
-                tCost.resizeTextMinSize = 13;
-                tCost.resizeTextMaxSize = 22;
-                tCost.horizontalOverflow = HorizontalWrapMode.Wrap;
-                tCost.color = new Color(1.0f, 0.85f, 0.35f);
-                tCost.text = "Giá: 15";
-                var rtCost = goCost.GetComponent<RectTransform>();
-                rtCost.anchorMin = new Vector2(1f, 0.5f);
-                rtCost.anchorMax = new Vector2(1f, 0.5f);
-                rtCost.pivot = new Vector2(1f, 0.5f);
-                rtCost.anchoredPosition = new Vector2(-190f, 0f);
-                rtCost.sizeDelta = new Vector2(390f, 44f);
-                var outCost = goCost.GetComponent<Outline>();
-                outCost.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.9f);
-                outCost.effectDistance = new Vector2(1f, -1f);
-
-                // Buy Button (160 x 52)
-                GameObject goBuy = new GameObject("BtnBuy", typeof(RectTransform), typeof(Image), typeof(Button));
-                goBuy.transform.SetParent(goRow.transform, false);
-                var imgBuy = goBuy.GetComponent<Image>();
-                imgBuy.color = new Color(0.20f, 0.68f, 0.32f);
-                var btnBuy = goBuy.GetComponent<Button>();
-                var rtBuy = goBuy.GetComponent<RectTransform>();
-                rtBuy.anchorMin = new Vector2(1f, 0.5f);
-                rtBuy.anchorMax = new Vector2(1f, 0.5f);
-                rtBuy.pivot = new Vector2(1f, 0.5f);
-                rtBuy.anchoredPosition = new Vector2(-15f, 0f);
-                rtBuy.sizeDelta = new Vector2(160f, 52f);
-
-                GameObject goBuyTxt = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goBuyTxt.transform.SetParent(goBuy.transform, false);
-                var tBuyTxt = goBuyTxt.GetComponent<Text>();
-                tBuyTxt.font = defaultFont;
-                tBuyTxt.fontSize = 22;
-                tBuyTxt.fontStyle = FontStyle.Bold;
-                tBuyTxt.alignment = TextAnchor.MiddleCenter;
-                tBuyTxt.color = Color.white;
-                tBuyTxt.text = "Nâng Cấp";
-                var rtBt = goBuyTxt.GetComponent<RectTransform>();
-                rtBt.anchorMin = Vector2.zero;
-                rtBt.anchorMax = Vector2.one;
-                rtBt.sizeDelta = Vector2.zero;
-                var outBuy = goBuyTxt.GetComponent<Outline>();
-                outBuy.effectColor = new Color(0.05f, 0.18f, 0.06f, 0.9f);
-                outBuy.effectDistance = new Vector2(1.5f, -1.5f);
-
-                rowView.txtName = tName;
-                rowView.txtLevel = tLv;
-                rowView.txtOutput = tOut;
-                rowView.txtCost = tCost;
-                rowView.btnBuy = btnBuy;
-                rowView.imgIcon = imgIcon;
-
-                shopView.shopRows.Add(rowView);
-            }
-
-            // Generate 4 Tool & Furnace Upgrade Rows in ContainerUpgrades
-            string[] upIds = new[] { "UP_HAMMER", "UP_FURNACE", "UP_GLOVES", "UP_OIL" };
-            string[] upNames = new[] { "Búa Rèn Thần Binh", "Lò Nung Nhiệt Hạch", "Găng Tay Da Rồng", "Dầu Tôi Huyền Bí" };
-            string[] upSprites = new[] {
-                "Assets/_Forge/Art/Textures/Icons/Icon_G1_Hammer.png",
-                "Assets/_Forge/Art/Textures/Hero_Furnace.png",
-                "Assets/_Forge/Art/Textures/Hero_Anvil.png",
-                "Assets/_Forge/Art/Textures/Icons/Icon_Ore_Nugget.png"
-            };
-
-            for (int i = 0; i < 4; i++)
-            {
-                GameObject goRow = new GameObject($"Row_{upIds[i]}");
-                goRow.transform.SetParent(goUpgradeList.transform, false);
-                var imgRow = goRow.AddComponent<Image>();
-                imgRow.color = new Color(0.20f, 0.18f, 0.26f, 0.90f);
-                var rtRow = goRow.GetComponent<RectTransform>();
-                rtRow.anchorMin = new Vector2(0f, 1f);
-                rtRow.anchorMax = new Vector2(1f, 1f);
-                rtRow.pivot = new Vector2(0.5f, 1f);
-                rtRow.anchoredPosition = new Vector2(0f, -(i * 88f));
-                rtRow.sizeDelta = new Vector2(0f, 80f);
-
-                var rowView = goRow.AddComponent<ShopRowView>();
-
-                // Icon preview
-                GameObject goIcon = new GameObject("ImgIcon");
-                goIcon.transform.SetParent(goRow.transform, false);
-                var imgIcon = goIcon.AddComponent<Image>();
-                imgIcon.preserveAspect = true;
-                Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(upSprites[i]);
-                if (sp != null) imgIcon.sprite = sp;
-                var rtIcon = goIcon.GetComponent<RectTransform>();
-                rtIcon.anchorMin = new Vector2(0f, 0.5f);
-                rtIcon.anchorMax = new Vector2(0f, 0.5f);
-                rtIcon.pivot = new Vector2(0f, 0.5f);
-                rtIcon.anchoredPosition = new Vector2(14f, 0f);
-                rtIcon.sizeDelta = new Vector2(58f, 58f);
-
-                // Name
-                GameObject goName = new GameObject("TxtName", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goName.transform.SetParent(goRow.transform, false);
-                var tName = goName.GetComponent<Text>();
-                tName.font = defaultFont;
-                tName.fontSize = 26;
-                tName.fontStyle = FontStyle.Bold;
-                tName.alignment = TextAnchor.MiddleLeft;
-                tName.color = new Color(1.0f, 0.95f, 0.85f);
-                tName.text = upNames[i];
-                var rtN = goName.GetComponent<RectTransform>();
-                rtN.anchorMin = new Vector2(0f, 0.5f);
-                rtN.anchorMax = new Vector2(0f, 0.5f);
-                rtN.pivot = new Vector2(0f, 0.5f);
-                rtN.anchoredPosition = new Vector2(82f, 12f);
-                rtN.sizeDelta = new Vector2(280f, 32f);
-                var outName = goName.GetComponent<Outline>();
-                outName.effectColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
-                outName.effectDistance = new Vector2(1f, -1f);
-
-                // Level
-                GameObject goLv = new GameObject("TxtLevel", typeof(RectTransform), typeof(Text));
-                goLv.transform.SetParent(goRow.transform, false);
-                var tLv = goLv.GetComponent<Text>();
-                tLv.font = defaultFont;
-                tLv.fontSize = 20;
-                tLv.color = new Color(0.70f, 0.75f, 0.85f);
-                tLv.text = "Cấp: 1";
-                var rtLv = goLv.GetComponent<RectTransform>();
-                rtLv.anchorMin = new Vector2(0f, 0.5f);
-                rtLv.anchorMax = new Vector2(0f, 0.5f);
-                rtLv.pivot = new Vector2(0f, 0.5f);
-                rtLv.anchoredPosition = new Vector2(82f, -16f);
-                rtLv.sizeDelta = new Vector2(220f, 26f);
-
-                // Output/Bonus stat
-                GameObject goOut = new GameObject("TxtOutput", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goOut.transform.SetParent(goRow.transform, false);
-                var tOut = goOut.GetComponent<Text>();
-                tOut.font = defaultFont;
-                tOut.fontSize = 22;
-                tOut.fontStyle = FontStyle.Bold;
-                tOut.alignment = TextAnchor.MiddleLeft;
-                tOut.color = new Color(1.0f, 0.75f, 0.30f);
-                tOut.text = "+0";
-                var rtOut = goOut.GetComponent<RectTransform>();
-                rtOut.anchorMin = new Vector2(0f, 0.5f);
-                rtOut.anchorMax = new Vector2(0f, 0.5f);
-                rtOut.pivot = new Vector2(0f, 0.5f);
-                rtOut.anchoredPosition = new Vector2(370f, 0f);
-                rtOut.sizeDelta = new Vector2(240f, 32f);
-                var outOut = goOut.GetComponent<Outline>();
-                outOut.effectColor = new Color(0.15f, 0.08f, 0.02f, 0.9f);
-                outOut.effectDistance = new Vector2(1f, -1f);
-
-                // Cost
-                GameObject goCost = new GameObject("TxtCost", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goCost.transform.SetParent(goRow.transform, false);
-                var tCost = goCost.GetComponent<Text>();
-                tCost.font = defaultFont;
-                tCost.fontSize = 22;
-                tCost.fontStyle = FontStyle.Bold;
-                tCost.alignment = TextAnchor.MiddleRight;
-                tCost.resizeTextForBestFit = true;
-                tCost.resizeTextMinSize = 13;
-                tCost.resizeTextMaxSize = 22;
-                tCost.color = new Color(1.0f, 0.85f, 0.35f);
-                tCost.text = "Giá: 50";
-                var rtCost = goCost.GetComponent<RectTransform>();
-                rtCost.anchorMin = new Vector2(1f, 0.5f);
-                rtCost.anchorMax = new Vector2(1f, 0.5f);
-                rtCost.pivot = new Vector2(1f, 0.5f);
-                rtCost.anchoredPosition = new Vector2(-190f, 0f);
-                rtCost.sizeDelta = new Vector2(300f, 44f);
-                var outCost = goCost.GetComponent<Outline>();
-                outCost.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.9f);
-                outCost.effectDistance = new Vector2(1f, -1f);
-
-                // Buy button
-                GameObject goBuy = new GameObject("BtnBuy", typeof(RectTransform), typeof(Image), typeof(Button));
-                goBuy.transform.SetParent(goRow.transform, false);
-                var imgBuy = goBuy.GetComponent<Image>();
-                imgBuy.color = new Color(0.20f, 0.68f, 0.32f);
-                var btnBuy = goBuy.GetComponent<Button>();
-                var rtBuy = goBuy.GetComponent<RectTransform>();
-                rtBuy.anchorMin = new Vector2(1f, 0.5f);
-                rtBuy.anchorMax = new Vector2(1f, 0.5f);
-                rtBuy.pivot = new Vector2(1f, 0.5f);
-                rtBuy.anchoredPosition = new Vector2(-15f, 0f);
-                rtBuy.sizeDelta = new Vector2(160f, 52f);
-
-                GameObject goBuyTxt = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
-                goBuyTxt.transform.SetParent(goBuy.transform, false);
-                var tBuyTxt = goBuyTxt.GetComponent<Text>();
-                tBuyTxt.font = defaultFont;
-                tBuyTxt.fontSize = 22;
-                tBuyTxt.fontStyle = FontStyle.Bold;
-                tBuyTxt.alignment = TextAnchor.MiddleCenter;
-                tBuyTxt.color = Color.white;
-                tBuyTxt.text = "Nâng Cấp";
-                var rtBt = goBuyTxt.GetComponent<RectTransform>();
-                rtBt.anchorMin = Vector2.zero;
-                rtBt.anchorMax = Vector2.one;
-                rtBt.sizeDelta = Vector2.zero;
-                var outBuy = goBuyTxt.GetComponent<Outline>();
-                outBuy.effectColor = new Color(0.05f, 0.18f, 0.06f, 0.9f);
-                outBuy.effectDistance = new Vector2(1.5f, -1.5f);
-
-                rowView.txtName = tName;
-                rowView.txtLevel = tLv;
-                rowView.txtOutput = tOut;
-                rowView.txtCost = tCost;
-                rowView.btnBuy = btnBuy;
-                rowView.imgIcon = imgIcon;
-
-                shopView.upgradeRows.Add(rowView);
-            }
+            // --- PanelShop: Rebuilt & Beautified ---
+            var shopView = BuildShopUIPanel(goCanvas, btnShop, defaultFont);
             gm.shopView = shopView;
+            RectTransform rtPanelShop = shopView != null && shopView.panelShop != null ? shopView.panelShop.GetComponent<RectTransform>() : null;
 
             // --- PanelOfflinePopup: 520x280 ---
             GameObject goPopup = new GameObject("PanelOfflinePopup");
@@ -2658,6 +2239,728 @@ namespace Forge.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[ForgeSetup] === All Materials Refreshed and URP Enforced! (Fixed {fixedCount} materials) ===");
+        }
+
+        [MenuItem("Forge/Setup/Save Furnace Config to Prefab", false, 99)]
+        public static void SaveFurnaceConfigToPrefab()
+        {
+            EditorSceneManager.OpenScene(SCENE_PATH);
+            var furnaceGo = GameObject.Find("Furnace") ?? GameObject.FindWithTag("Furnace");
+            if (furnaceGo == null)
+            {
+                Debug.LogWarning("[ForgeSetup] Furnace not found in scene!");
+                return;
+            }
+
+            string prefabDir = "Assets/_Forge/Prefabs";
+            if (!Directory.Exists(prefabDir)) Directory.CreateDirectory(prefabDir);
+
+            string prefabPath = $"{prefabDir}/Hero_Furnace_Configured.prefab";
+            PrefabUtility.SaveAsPrefabAssetAndConnect(furnaceGo, prefabPath, InteractionMode.AutomatedAction);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Vector3 pos = furnaceGo.transform.position;
+            Vector3 rot = furnaceGo.transform.eulerAngles;
+            Vector3 sca = furnaceGo.transform.localScale;
+            Debug.Log($"[ForgeSetup] Successfully saved custom Furnace configuration to {prefabPath}! Pos: {pos}, Rot: {rot}, Scale: {sca}");
+        }
+
+        [MenuItem("Forge/Setup/Save Hammer Config to Prefab", false, 100)]
+        public static void SaveHammerConfigToPrefab()
+        {
+            var hammerGo = GameObject.Find("Hammer_3D") ?? GameObject.Find("Hammer");
+            if (hammerGo == null)
+            {
+                Debug.LogWarning("[ForgeSetup] Hammer_3D not found in scene!");
+                return;
+            }
+
+            string prefabDir = "Assets/_Forge/Prefabs";
+            if (!Directory.Exists(prefabDir)) Directory.CreateDirectory(prefabDir);
+
+            string prefabPath = $"{prefabDir}/Hero_Hammer_Configured.prefab";
+            PrefabUtility.SaveAsPrefabAssetAndConnect(hammerGo, prefabPath, InteractionMode.AutomatedAction);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Vector3 pos = hammerGo.transform.position;
+            Vector3 rot = hammerGo.transform.eulerAngles;
+            Vector3 sca = hammerGo.transform.localScale;
+            Debug.Log($"[ForgeSetup] Successfully saved custom Hammer configuration to {prefabPath}! Pos: {pos}, Rot: {rot}, Scale: {sca}");
+        }
+
+        [MenuItem("Forge/Setup/Add Behind Sword Rack to Scene", false, 101)]
+        public static void AddBehindSwordRackToScene()
+        {
+            var env = GameObject.Find("[World]/Environment") ?? GameObject.Find("Environment");
+            Transform parent = env != null ? env.transform : null;
+
+            var existing = GameObject.Find("Behind_Sword_Rack");
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing);
+            }
+
+            var mats = CreateMaterials();
+            GameObject goRack = Forge3DBuilder.BuildBehindSwordRack(parent, new Vector3(0.00f, 0.80f, 0.55f), Quaternion.identity, mats);
+            goRack.name = "Behind_Sword_Rack";
+
+            foreach (var r in goRack.GetComponentsInChildren<Renderer>())
+            {
+                r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            }
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+            Debug.Log("[ForgeSetup] Successfully added 3D Behind Sword Rack to active scene!");
+        }
+
+        public static ShopView BuildShopUIPanel(Canvas canvas, Button btnShop, Font defaultFont)
+        {
+            return BuildShopUIPanel(canvas != null ? canvas.gameObject : null, btnShop, defaultFont);
+        }
+
+        public static ShopView BuildShopUIPanel(GameObject goCanvas, Button btnShop, Font defaultFont)
+        {
+            if (goCanvas == null) return null;
+
+            // Xóa PanelShop cũ nếu đã tồn tại
+            var oldPanel = goCanvas.transform.Find("PanelShop");
+            if (oldPanel != null)
+            {
+                UnityEngine.Object.DestroyImmediate(oldPanel.gameObject);
+            }
+
+            var shopView = goCanvas.GetComponent<ShopView>();
+            if (shopView == null)
+            {
+                shopView = goCanvas.AddComponent<ShopView>();
+            }
+            shopView.shopRows.Clear();
+            shopView.upgradeRows.Clear();
+
+            // --- PanelShop: Kích thước 1160 x 500, bo sát phía trên thanh công cụ đáy ---
+            GameObject goPanelShop = new GameObject("PanelShop");
+            goPanelShop.transform.SetParent(goCanvas.transform, false);
+            var imgPanelShop = goPanelShop.AddComponent<Image>();
+            imgPanelShop.color = new Color(0.09f, 0.09f, 0.12f, 0.98f);
+            var rtPanelShop = goPanelShop.GetComponent<RectTransform>();
+            rtPanelShop.anchorMin = new Vector2(0.5f, 0f);
+            rtPanelShop.anchorMax = new Vector2(0.5f, 0f);
+            rtPanelShop.pivot = new Vector2(0.5f, 0f);
+            rtPanelShop.anchoredPosition = new Vector2(0f, 105f);
+            rtPanelShop.sizeDelta = new Vector2(1160f, 500f);
+
+            // Viền Hoàng Gia (Royal Dwarven Border Frame)
+            GameObject goBorder = new GameObject("Border_Frame");
+            goBorder.transform.SetParent(goPanelShop.transform, false);
+            var imgBorder = goBorder.AddComponent<Image>();
+            imgBorder.color = new Color(0.85f, 0.65f, 0.22f, 0.90f);
+            var rtBorder = goBorder.GetComponent<RectTransform>();
+            rtBorder.anchorMin = Vector2.zero;
+            rtBorder.anchorMax = Vector2.one;
+            rtBorder.sizeDelta = Vector2.zero;
+
+            GameObject goInner = new GameObject("Inner_Bg");
+            goInner.transform.SetParent(goBorder.transform, false);
+            var imgInner = goInner.AddComponent<Image>();
+            imgInner.color = new Color(0.09f, 0.09f, 0.12f, 0.98f);
+            var rtInner = goInner.GetComponent<RectTransform>();
+            rtInner.anchorMin = Vector2.zero;
+            rtInner.anchorMax = Vector2.one;
+            rtInner.offsetMin = new Vector2(3f, 3f);
+            rtInner.offsetMax = new Vector2(-3f, -3f);
+
+            // Header Bar phía trên
+            GameObject goHeader = new GameObject("Header_Bar");
+            goHeader.transform.SetParent(goPanelShop.transform, false);
+            var imgHeader = goHeader.AddComponent<Image>();
+            imgHeader.color = new Color(0.14f, 0.15f, 0.20f, 0.95f);
+            var rtHeader = goHeader.GetComponent<RectTransform>();
+            rtHeader.anchorMin = new Vector2(0f, 1f);
+            rtHeader.anchorMax = new Vector2(1f, 1f);
+            rtHeader.pivot = new Vector2(0.5f, 1f);
+            rtHeader.anchoredPosition = new Vector2(0f, 0f);
+            rtHeader.sizeDelta = new Vector2(0f, 54f);
+
+            // Vạch kẻ ngang phân cách Header với Nội dung
+            GameObject goDivider = new GameObject("Divider_Line");
+            goDivider.transform.SetParent(goPanelShop.transform, false);
+            var imgDivider = goDivider.AddComponent<Image>();
+            imgDivider.color = new Color(0.85f, 0.65f, 0.22f, 0.5f);
+            var rtDivider = goDivider.GetComponent<RectTransform>();
+            rtDivider.anchorMin = new Vector2(0f, 1f);
+            rtDivider.anchorMax = new Vector2(1f, 1f);
+            rtDivider.pivot = new Vector2(0.5f, 1f);
+            rtDivider.anchoredPosition = new Vector2(0f, -54f);
+            rtDivider.sizeDelta = new Vector2(-12f, 2f);
+
+            // Nút Close Shop "✕"
+            GameObject goBtnClose = new GameObject("BtnCloseShop", typeof(RectTransform), typeof(Image), typeof(Button));
+            goBtnClose.transform.SetParent(goPanelShop.transform, false);
+            var imgClose = goBtnClose.GetComponent<Image>();
+            imgClose.color = new Color(0.72f, 0.18f, 0.18f, 1f);
+            var btnClose = goBtnClose.GetComponent<Button>();
+            var rtClose = goBtnClose.GetComponent<RectTransform>();
+            rtClose.anchorMin = new Vector2(1f, 1f);
+            rtClose.anchorMax = new Vector2(1f, 1f);
+            rtClose.pivot = new Vector2(1f, 1f);
+            rtClose.anchoredPosition = new Vector2(-10f, -7f);
+            rtClose.sizeDelta = new Vector2(40f, 40f);
+            var outClose = goBtnClose.AddComponent<Outline>();
+            outClose.effectColor = new Color(0.35f, 0.05f, 0.05f, 0.9f);
+            outClose.effectDistance = new Vector2(1f, -1f);
+
+            GameObject goCloseTxt = new GameObject("X");
+            goCloseTxt.transform.SetParent(goBtnClose.transform, false);
+            var txtClose = goCloseTxt.AddComponent<Text>();
+            txtClose.font = defaultFont;
+            txtClose.fontSize = 22;
+            txtClose.fontStyle = FontStyle.Bold;
+            txtClose.alignment = TextAnchor.MiddleCenter;
+            txtClose.color = Color.white;
+            txtClose.text = "✕";
+            var rtCloseTxt = goCloseTxt.GetComponent<RectTransform>();
+            rtCloseTxt.anchorMin = Vector2.zero;
+            rtCloseTxt.anchorMax = Vector2.one;
+            rtCloseTxt.sizeDelta = Vector2.zero;
+
+            // Title Shop: 460px rộng rãi, font 26pt vàng rực rỡ
+            GameObject goShopTitle = new GameObject("Title", typeof(RectTransform), typeof(Text), typeof(Outline));
+            goShopTitle.transform.SetParent(goPanelShop.transform, false);
+            var txtShopTitle = goShopTitle.GetComponent<Text>();
+            txtShopTitle.font = defaultFont;
+            txtShopTitle.fontSize = 26;
+            txtShopTitle.fontStyle = FontStyle.Bold;
+            txtShopTitle.color = new Color(1.0f, 0.88f, 0.42f);
+            txtShopTitle.text = "CÔNG XƯỞNG TỰ ĐỘNG HÓA";
+            var rtShopTitle = goShopTitle.GetComponent<RectTransform>();
+            rtShopTitle.anchorMin = new Vector2(0f, 1f);
+            rtShopTitle.anchorMax = new Vector2(0f, 1f);
+            rtShopTitle.pivot = new Vector2(0f, 1f);
+            rtShopTitle.anchoredPosition = new Vector2(25f, -6f);
+            rtShopTitle.sizeDelta = new Vector2(460f, 44f);
+            var outTitle = goShopTitle.GetComponent<Outline>();
+            outTitle.effectColor = new Color(0.10f, 0.05f, 0.02f, 0.95f);
+            outTitle.effectDistance = new Vector2(1.5f, -1.5f);
+
+            // Tab 1: Machines
+            GameObject goTabM = new GameObject("BtnTabMachines", typeof(RectTransform), typeof(Image), typeof(Button));
+            goTabM.transform.SetParent(goPanelShop.transform, false);
+            var imgTabM = goTabM.GetComponent<Image>();
+            imgTabM.color = new Color(0.72f, 0.40f, 0.12f, 1f);
+            var btnTabM = goTabM.GetComponent<Button>();
+            var rtTabM = goTabM.GetComponent<RectTransform>();
+            rtTabM.anchorMin = new Vector2(0f, 1f);
+            rtTabM.anchorMax = new Vector2(0f, 1f);
+            rtTabM.pivot = new Vector2(0f, 1f);
+            rtTabM.anchoredPosition = new Vector2(470f, -8f);
+            rtTabM.sizeDelta = new Vector2(240f, 38f);
+
+            GameObject goTxtTabM = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+            goTxtTabM.transform.SetParent(goTabM.transform, false);
+            var tTabM = goTxtTabM.GetComponent<Text>();
+            tTabM.font = defaultFont;
+            tTabM.fontSize = 19;
+            tTabM.fontStyle = FontStyle.Bold;
+            tTabM.alignment = TextAnchor.MiddleCenter;
+            tTabM.color = new Color(1.0f, 0.95f, 0.80f);
+            tTabM.text = "⚙️ DÂY CHUYỀN MÁY";
+            var rtTM = goTxtTabM.GetComponent<RectTransform>();
+            rtTM.anchorMin = Vector2.zero; rtTM.anchorMax = Vector2.one; rtTM.sizeDelta = Vector2.zero;
+            var outTM = goTxtTabM.GetComponent<Outline>();
+            outTM.effectColor = new Color(0.12f, 0.05f, 0.02f, 0.9f);
+            outTM.effectDistance = new Vector2(1f, -1f);
+
+            // Tab 2: Upgrades
+            GameObject goTabU = new GameObject("BtnTabUpgrades", typeof(RectTransform), typeof(Image), typeof(Button));
+            goTabU.transform.SetParent(goPanelShop.transform, false);
+            var imgTabU = goTabU.GetComponent<Image>();
+            imgTabU.color = new Color(0.18f, 0.20f, 0.28f, 0.95f);
+            var btnTabU = goTabU.GetComponent<Button>();
+            var rtTabU = goTabU.GetComponent<RectTransform>();
+            rtTabU.anchorMin = new Vector2(0f, 1f);
+            rtTabU.anchorMax = new Vector2(0f, 1f);
+            rtTabU.pivot = new Vector2(0f, 1f);
+            rtTabU.anchoredPosition = new Vector2(725f, -8f);
+            rtTabU.sizeDelta = new Vector2(240f, 38f);
+
+            GameObject goTxtTabU = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+            goTxtTabU.transform.SetParent(goTabU.transform, false);
+            var tTabU = goTxtTabU.GetComponent<Text>();
+            tTabU.font = defaultFont;
+            tTabU.fontSize = 19;
+            tTabU.fontStyle = FontStyle.Bold;
+            tTabU.alignment = TextAnchor.MiddleCenter;
+            tTabU.color = new Color(0.65f, 0.72f, 0.82f);
+            tTabU.text = "🔨 BÚA & LÒ NUNG";
+            var rtTU = goTxtTabU.GetComponent<RectTransform>();
+            rtTU.anchorMin = Vector2.zero; rtTU.anchorMax = Vector2.one; rtTU.sizeDelta = Vector2.zero;
+            var outTU = goTxtTabU.GetComponent<Outline>();
+            outTU.effectColor = new Color(0.05f, 0.05f, 0.1f, 0.9f);
+            outTU.effectDistance = new Vector2(1f, -1f);
+
+            // Shop Rows Container (Machines)
+            GameObject goShopList = new GameObject("ContainerMachines");
+            goShopList.transform.SetParent(goPanelShop.transform, false);
+            var rtShopList = goShopList.AddComponent<RectTransform>();
+            rtShopList.anchorMin = new Vector2(0f, 0f);
+            rtShopList.anchorMax = new Vector2(1f, 1f);
+            rtShopList.offsetMin = new Vector2(18f, 14f);
+            rtShopList.offsetMax = new Vector2(-18f, -60f);
+
+            // Upgrades Container
+            GameObject goUpgradeList = new GameObject("ContainerUpgrades");
+            goUpgradeList.transform.SetParent(goPanelShop.transform, false);
+            var rtUpgradeList = goUpgradeList.AddComponent<RectTransform>();
+            rtUpgradeList.anchorMin = new Vector2(0f, 0f);
+            rtUpgradeList.anchorMax = new Vector2(1f, 1f);
+            rtUpgradeList.offsetMin = new Vector2(18f, 14f);
+            rtUpgradeList.offsetMax = new Vector2(-18f, -60f);
+            goUpgradeList.SetActive(false);
+
+            shopView.panelShop = goPanelShop;
+            shopView.btnOpenShop = btnShop;
+            shopView.btnCloseShop = btnClose;
+            shopView.txtShopTitle = txtShopTitle;
+            shopView.btnTabMachines = btnTabM;
+            shopView.btnTabUpgrades = btnTabU;
+            shopView.containerMachines = goShopList;
+            shopView.containerUpgrades = goUpgradeList;
+
+            // Generate 5 Rows Machines với icon đầy đủ và nền bo khối
+            string[] gNames = new[] { "Tay Búa Tí Hon", "Cũi Đào Quặng", "Lò Than Tự Đun", "Cối Xay Kim", "Robot Thợ Cả" };
+            string[] gSprites = new[] {
+                "Assets/_Forge/Art/Textures/Icons/Icon_G1_Hammer.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_G2_Drill.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_G3_Stove.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_G4_Gear.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_G5_Robot.png"
+            };
+
+            for (int i = 0; i < 5; i++)
+            {
+                GameObject goRow = new GameObject($"Row_G{i + 1}");
+                goRow.transform.SetParent(goShopList.transform, false);
+                var imgRow = goRow.AddComponent<Image>();
+                imgRow.color = new Color(0.13f, 0.14f, 0.19f, 0.95f);
+                var rtRow = goRow.GetComponent<RectTransform>();
+                rtRow.anchorMin = new Vector2(0f, 1f);
+                rtRow.anchorMax = new Vector2(1f, 1f);
+                rtRow.pivot = new Vector2(0.5f, 1f);
+                rtRow.anchoredPosition = new Vector2(0f, -(i * 79f));
+                rtRow.sizeDelta = new Vector2(0f, 72f);
+                var outRow = goRow.AddComponent<Outline>();
+                outRow.effectColor = new Color(0.28f, 0.30f, 0.40f, 0.45f);
+                outRow.effectDistance = new Vector2(1f, -1f);
+
+                var rowView = goRow.AddComponent<ShopRowView>();
+
+                // Khung chứa Icon (Slot Frame)
+                GameObject goIconFrame = new GameObject("IconFrame", typeof(RectTransform), typeof(Image), typeof(Outline));
+                goIconFrame.transform.SetParent(goRow.transform, false);
+                var imgFrame = goIconFrame.GetComponent<Image>();
+                imgFrame.color = new Color(0.06f, 0.06f, 0.08f, 1f);
+                var rtFrame = goIconFrame.GetComponent<RectTransform>();
+                rtFrame.anchorMin = new Vector2(0f, 0.5f);
+                rtFrame.anchorMax = new Vector2(0f, 0.5f);
+                rtFrame.pivot = new Vector2(0f, 0.5f);
+                rtFrame.anchoredPosition = new Vector2(10f, 0f);
+                rtFrame.sizeDelta = new Vector2(58f, 58f);
+                var outFrame = goIconFrame.GetComponent<Outline>();
+                outFrame.effectColor = new Color(0.65f, 0.52f, 0.25f, 0.8f);
+                outFrame.effectDistance = new Vector2(1f, -1f);
+
+                // Icon máy bên trong Slot Frame
+                GameObject goIcon = new GameObject("ImgIcon", typeof(RectTransform), typeof(Image));
+                goIcon.transform.SetParent(goIconFrame.transform, false);
+                var imgIcon = goIcon.GetComponent<Image>();
+                imgIcon.preserveAspect = true;
+                Sprite spM = AssetDatabase.LoadAssetAtPath<Sprite>(gSprites[i]);
+                if (spM != null) imgIcon.sprite = spM;
+                imgIcon.color = Color.white;
+                var rtIcon = goIcon.GetComponent<RectTransform>();
+                rtIcon.anchorMin = new Vector2(0.5f, 0.5f);
+                rtIcon.anchorMax = new Vector2(0.5f, 0.5f);
+                rtIcon.pivot = new Vector2(0.5f, 0.5f);
+                rtIcon.anchoredPosition = Vector2.zero;
+                rtIcon.sizeDelta = new Vector2(50f, 50f);
+
+                // Tên máy
+                GameObject goName = new GameObject("TxtName", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goName.transform.SetParent(goRow.transform, false);
+                var tName = goName.GetComponent<Text>();
+                tName.font = defaultFont;
+                tName.fontSize = 24;
+                tName.fontStyle = FontStyle.Bold;
+                tName.alignment = TextAnchor.MiddleLeft;
+                tName.color = new Color(1.0f, 0.96f, 0.90f);
+                tName.text = gNames[i];
+                var rtN = goName.GetComponent<RectTransform>();
+                rtN.anchorMin = new Vector2(0f, 0.5f);
+                rtN.anchorMax = new Vector2(0f, 0.5f);
+                rtN.pivot = new Vector2(0f, 0.5f);
+                rtN.anchoredPosition = new Vector2(80f, 13f);
+                rtN.sizeDelta = new Vector2(250f, 30f);
+                var outName = goName.GetComponent<Outline>();
+                outName.effectColor = new Color(0.06f, 0.06f, 0.08f, 0.95f);
+                outName.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Cấp độ
+                GameObject goLv = new GameObject("TxtLevel", typeof(RectTransform), typeof(Text));
+                goLv.transform.SetParent(goRow.transform, false);
+                var tLv = goLv.GetComponent<Text>();
+                tLv.font = defaultFont;
+                tLv.fontSize = 18;
+                tLv.color = new Color(0.55f, 0.80f, 0.96f);
+                tLv.text = "Cấp: 0";
+                var rtLv = goLv.GetComponent<RectTransform>();
+                rtLv.anchorMin = new Vector2(0f, 0.5f);
+                rtLv.anchorMax = new Vector2(0f, 0.5f);
+                rtLv.pivot = new Vector2(0f, 0.5f);
+                rtLv.anchoredPosition = new Vector2(80f, -16f);
+                rtLv.sizeDelta = new Vector2(200f, 24f);
+
+                // Sản lượng DPS
+                GameObject goOut = new GameObject("TxtOutput", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goOut.transform.SetParent(goRow.transform, false);
+                var tOut = goOut.GetComponent<Text>();
+                tOut.font = defaultFont;
+                tOut.fontSize = 22;
+                tOut.fontStyle = FontStyle.Bold;
+                tOut.alignment = TextAnchor.MiddleLeft;
+                tOut.color = new Color(0.35f, 0.98f, 0.55f);
+                tOut.text = "+0/s";
+                var rtOut = goOut.GetComponent<RectTransform>();
+                rtOut.anchorMin = new Vector2(0f, 0.5f);
+                rtOut.anchorMax = new Vector2(0f, 0.5f);
+                rtOut.pivot = new Vector2(0f, 0.5f);
+                rtOut.anchoredPosition = new Vector2(340f, 0f);
+                rtOut.sizeDelta = new Vector2(160f, 32f);
+                var outOut = goOut.GetComponent<Outline>();
+                outOut.effectColor = new Color(0.03f, 0.14f, 0.05f, 0.95f);
+                outOut.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Chi phí
+                GameObject goCost = new GameObject("TxtCost", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goCost.transform.SetParent(goRow.transform, false);
+                var tCost = goCost.GetComponent<Text>();
+                tCost.font = defaultFont;
+                tCost.fontSize = 21;
+                tCost.fontStyle = FontStyle.Bold;
+                tCost.alignment = TextAnchor.MiddleRight;
+                tCost.resizeTextForBestFit = true;
+                tCost.resizeTextMinSize = 13;
+                tCost.resizeTextMaxSize = 21;
+                tCost.horizontalOverflow = HorizontalWrapMode.Wrap;
+                tCost.color = new Color(1.0f, 0.86f, 0.35f);
+                tCost.text = "Giá: 15";
+                var rtCost = goCost.GetComponent<RectTransform>();
+                rtCost.anchorMin = new Vector2(1f, 0.5f);
+                rtCost.anchorMax = new Vector2(1f, 0.5f);
+                rtCost.pivot = new Vector2(1f, 0.5f);
+                rtCost.anchoredPosition = new Vector2(-185f, 0f);
+                rtCost.sizeDelta = new Vector2(400f, 42f);
+                var outCost = goCost.GetComponent<Outline>();
+                outCost.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.95f);
+                outCost.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Nút Mua / Nâng Cấp
+                GameObject goBuy = new GameObject("BtnBuy", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+                goBuy.transform.SetParent(goRow.transform, false);
+                var imgBuy = goBuy.GetComponent<Image>();
+                imgBuy.color = new Color(0.18f, 0.65f, 0.30f, 1f);
+                var btnBuy = goBuy.GetComponent<Button>();
+                var rtBuy = goBuy.GetComponent<RectTransform>();
+                rtBuy.anchorMin = new Vector2(1f, 0.5f);
+                rtBuy.anchorMax = new Vector2(1f, 0.5f);
+                rtBuy.pivot = new Vector2(1f, 0.5f);
+                rtBuy.anchoredPosition = new Vector2(-14f, 0f);
+                rtBuy.sizeDelta = new Vector2(155f, 50f);
+                var outBuyBtn = goBuy.GetComponent<Outline>();
+                outBuyBtn.effectColor = new Color(0.40f, 0.92f, 0.52f, 0.8f);
+                outBuyBtn.effectDistance = new Vector2(1.5f, -1.5f);
+
+                GameObject goBuyTxt = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goBuyTxt.transform.SetParent(goBuy.transform, false);
+                var tBuyTxt = goBuyTxt.GetComponent<Text>();
+                tBuyTxt.font = defaultFont;
+                tBuyTxt.fontSize = 21;
+                tBuyTxt.fontStyle = FontStyle.Bold;
+                tBuyTxt.alignment = TextAnchor.MiddleCenter;
+                tBuyTxt.color = Color.white;
+                tBuyTxt.text = "Nâng Cấp";
+                var rtBt = goBuyTxt.GetComponent<RectTransform>();
+                rtBt.anchorMin = Vector2.zero;
+                rtBt.anchorMax = Vector2.one;
+                rtBt.sizeDelta = Vector2.zero;
+                var outBuy = goBuyTxt.GetComponent<Outline>();
+                outBuy.effectColor = new Color(0.05f, 0.18f, 0.06f, 0.9f);
+                outBuy.effectDistance = new Vector2(1.5f, -1.5f);
+
+                rowView.txtName = tName;
+                rowView.txtLevel = tLv;
+                rowView.txtOutput = tOut;
+                rowView.txtCost = tCost;
+                rowView.btnBuy = btnBuy;
+                rowView.imgIcon = imgIcon;
+
+                shopView.shopRows.Add(rowView);
+            }
+
+            // Generate 4 Tool & Furnace Upgrade Rows in ContainerUpgrades
+            string[] upIds = new[] { "UP_HAMMER", "UP_FURNACE", "UP_GLOVES", "UP_OIL" };
+            string[] upNames = new[] { "Búa Rèn Thần Binh", "Lò Nung Nhiệt Hạch", "Găng Tay Da Rồng", "Dầu Tôi Huyền Bí" };
+            string[] upSprites = new[] {
+                "Assets/_Forge/Art/Textures/Icons/Icon_G1_Hammer.png",
+                "Assets/_Forge/Art/Textures/Hero_Furnace.png",
+                "Assets/_Forge/Art/Textures/Hero_Anvil.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_Ore_Nugget.png"
+            };
+
+            for (int i = 0; i < 4; i++)
+            {
+                GameObject goRow = new GameObject($"Row_{upIds[i]}");
+                goRow.transform.SetParent(goUpgradeList.transform, false);
+                var imgRow = goRow.AddComponent<Image>();
+                imgRow.color = new Color(0.15f, 0.14f, 0.22f, 0.95f);
+                var rtRow = goRow.GetComponent<RectTransform>();
+                rtRow.anchorMin = new Vector2(0f, 1f);
+                rtRow.anchorMax = new Vector2(1f, 1f);
+                rtRow.pivot = new Vector2(0.5f, 1f);
+                rtRow.anchoredPosition = new Vector2(0f, -(i * 88f));
+                rtRow.sizeDelta = new Vector2(0f, 80f);
+                var outRow = goRow.AddComponent<Outline>();
+                outRow.effectColor = new Color(0.35f, 0.30f, 0.50f, 0.5f);
+                outRow.effectDistance = new Vector2(1f, -1f);
+
+                var rowView = goRow.AddComponent<ShopRowView>();
+
+                // Khung chứa Icon
+                GameObject goIconFrame = new GameObject("IconFrame", typeof(RectTransform), typeof(Image), typeof(Outline));
+                goIconFrame.transform.SetParent(goRow.transform, false);
+                var imgFrame = goIconFrame.GetComponent<Image>();
+                imgFrame.color = new Color(0.06f, 0.06f, 0.08f, 1f);
+                var rtFrame = goIconFrame.GetComponent<RectTransform>();
+                rtFrame.anchorMin = new Vector2(0f, 0.5f);
+                rtFrame.anchorMax = new Vector2(0f, 0.5f);
+                rtFrame.pivot = new Vector2(0f, 0.5f);
+                rtFrame.anchoredPosition = new Vector2(10f, 0f);
+                rtFrame.sizeDelta = new Vector2(62f, 62f);
+                var outFrame = goIconFrame.GetComponent<Outline>();
+                outFrame.effectColor = new Color(0.70f, 0.55f, 0.28f, 0.85f);
+                outFrame.effectDistance = new Vector2(1f, -1f);
+
+                // Icon preview
+                GameObject goIcon = new GameObject("ImgIcon", typeof(RectTransform), typeof(Image));
+                goIcon.transform.SetParent(goIconFrame.transform, false);
+                var imgIcon = goIcon.GetComponent<Image>();
+                imgIcon.preserveAspect = true;
+                Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(upSprites[i]);
+                if (sp != null) imgIcon.sprite = sp;
+                imgIcon.color = Color.white;
+                var rtIcon = goIcon.GetComponent<RectTransform>();
+                rtIcon.anchorMin = new Vector2(0.5f, 0.5f);
+                rtIcon.anchorMax = new Vector2(0.5f, 0.5f);
+                rtIcon.pivot = new Vector2(0.5f, 0.5f);
+                rtIcon.anchoredPosition = Vector2.zero;
+                rtIcon.sizeDelta = new Vector2(54f, 54f);
+
+                // Name
+                GameObject goName = new GameObject("TxtName", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goName.transform.SetParent(goRow.transform, false);
+                var tName = goName.GetComponent<Text>();
+                tName.font = defaultFont;
+                tName.fontSize = 24;
+                tName.fontStyle = FontStyle.Bold;
+                tName.alignment = TextAnchor.MiddleLeft;
+                tName.color = new Color(1.0f, 0.95f, 0.85f);
+                tName.text = upNames[i];
+                var rtN = goName.GetComponent<RectTransform>();
+                rtN.anchorMin = new Vector2(0f, 0.5f);
+                rtN.anchorMax = new Vector2(0f, 0.5f);
+                rtN.pivot = new Vector2(0f, 0.5f);
+                rtN.anchoredPosition = new Vector2(82f, 13f);
+                rtN.sizeDelta = new Vector2(280f, 30f);
+                var outName = goName.GetComponent<Outline>();
+                outName.effectColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+                outName.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Level
+                GameObject goLv = new GameObject("TxtLevel", typeof(RectTransform), typeof(Text));
+                goLv.transform.SetParent(goRow.transform, false);
+                var tLv = goLv.GetComponent<Text>();
+                tLv.font = defaultFont;
+                tLv.fontSize = 18;
+                tLv.color = new Color(0.55f, 0.80f, 0.96f);
+                tLv.text = "Cấp: 1";
+                var rtLv = goLv.GetComponent<RectTransform>();
+                rtLv.anchorMin = new Vector2(0f, 0.5f);
+                rtLv.anchorMax = new Vector2(0f, 0.5f);
+                rtLv.pivot = new Vector2(0f, 0.5f);
+                rtLv.anchoredPosition = new Vector2(82f, -16f);
+                rtLv.sizeDelta = new Vector2(220f, 24f);
+
+                // Output/Bonus stat
+                GameObject goOut = new GameObject("TxtOutput", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goOut.transform.SetParent(goRow.transform, false);
+                var tOut = goOut.GetComponent<Text>();
+                tOut.font = defaultFont;
+                tOut.fontSize = 21;
+                tOut.fontStyle = FontStyle.Bold;
+                tOut.alignment = TextAnchor.MiddleLeft;
+                tOut.color = new Color(1.0f, 0.78f, 0.32f);
+                tOut.text = "+0";
+                var rtOut = goOut.GetComponent<RectTransform>();
+                rtOut.anchorMin = new Vector2(0f, 0.5f);
+                rtOut.anchorMax = new Vector2(0f, 0.5f);
+                rtOut.pivot = new Vector2(0f, 0.5f);
+                rtOut.anchoredPosition = new Vector2(370f, 0f);
+                rtOut.sizeDelta = new Vector2(240f, 32f);
+                var outOut = goOut.GetComponent<Outline>();
+                outOut.effectColor = new Color(0.15f, 0.08f, 0.02f, 0.9f);
+                outOut.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Cost
+                GameObject goCost = new GameObject("TxtCost", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goCost.transform.SetParent(goRow.transform, false);
+                var tCost = goCost.GetComponent<Text>();
+                tCost.font = defaultFont;
+                tCost.fontSize = 21;
+                tCost.fontStyle = FontStyle.Bold;
+                tCost.alignment = TextAnchor.MiddleRight;
+                tCost.resizeTextForBestFit = true;
+                tCost.resizeTextMinSize = 13;
+                tCost.resizeTextMaxSize = 21;
+                tCost.color = new Color(1.0f, 0.86f, 0.35f);
+                tCost.text = "Giá: 50";
+                var rtCost = goCost.GetComponent<RectTransform>();
+                rtCost.anchorMin = new Vector2(1f, 0.5f);
+                rtCost.anchorMax = new Vector2(1f, 0.5f);
+                rtCost.pivot = new Vector2(1f, 0.5f);
+                rtCost.anchoredPosition = new Vector2(-185f, 0f);
+                rtCost.sizeDelta = new Vector2(300f, 42f);
+                var outCost = goCost.GetComponent<Outline>();
+                outCost.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.9f);
+                outCost.effectDistance = new Vector2(1.2f, -1.2f);
+
+                // Buy button
+                GameObject goBuy = new GameObject("BtnBuy", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+                goBuy.transform.SetParent(goRow.transform, false);
+                var imgBuy = goBuy.GetComponent<Image>();
+                imgBuy.color = new Color(0.18f, 0.65f, 0.30f, 1f);
+                var btnBuy = goBuy.GetComponent<Button>();
+                var rtBuy = goBuy.GetComponent<RectTransform>();
+                rtBuy.anchorMin = new Vector2(1f, 0.5f);
+                rtBuy.anchorMax = new Vector2(1f, 0.5f);
+                rtBuy.pivot = new Vector2(1f, 0.5f);
+                rtBuy.anchoredPosition = new Vector2(-14f, 0f);
+                rtBuy.sizeDelta = new Vector2(155f, 50f);
+                var outBuyBtn = goBuy.GetComponent<Outline>();
+                outBuyBtn.effectColor = new Color(0.40f, 0.92f, 0.52f, 0.8f);
+                outBuyBtn.effectDistance = new Vector2(1.5f, -1.5f);
+
+                GameObject goBuyTxt = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goBuyTxt.transform.SetParent(goBuy.transform, false);
+                var tBuyTxt = goBuyTxt.GetComponent<Text>();
+                tBuyTxt.font = defaultFont;
+                tBuyTxt.fontSize = 21;
+                tBuyTxt.fontStyle = FontStyle.Bold;
+                tBuyTxt.alignment = TextAnchor.MiddleCenter;
+                tBuyTxt.color = Color.white;
+                tBuyTxt.text = "Nâng Cấp";
+                var rtBt = goBuyTxt.GetComponent<RectTransform>();
+                rtBt.anchorMin = Vector2.zero;
+                rtBt.anchorMax = Vector2.one;
+                rtBt.sizeDelta = Vector2.zero;
+                var outBuy = goBuyTxt.GetComponent<Outline>();
+                outBuy.effectColor = new Color(0.05f, 0.18f, 0.06f, 0.9f);
+                outBuy.effectDistance = new Vector2(1.5f, -1.5f);
+
+                rowView.txtName = tName;
+                rowView.txtLevel = tLv;
+                rowView.txtOutput = tOut;
+                rowView.txtCost = tCost;
+                rowView.btnBuy = btnBuy;
+                rowView.imgIcon = imgIcon;
+
+                shopView.upgradeRows.Add(rowView);
+            }
+
+            goPanelShop.SetActive(false);
+            return shopView;
+        }
+
+        [MenuItem("Forge/Setup/Rebuild & Beautify Shop UI in Scene", false, 10)]
+        public static void RebuildBeautifyShopUIInScene()
+        {
+            var canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogError("[ForgeSetup] Canvas not found in active scene!");
+                return;
+            }
+
+            var gm = UnityEngine.Object.FindObjectOfType<GameManager>();
+            var defaultFont = GetDefaultFont();
+
+            // Cập nhật GeneratorDefinition icons
+            var defs = CreateOrLoadGeneratorDefinitions(null);
+
+            Button btnShop = null;
+            if (gm != null && gm.shopView != null && gm.shopView.btnOpenShop != null)
+            {
+                btnShop = gm.shopView.btnOpenShop;
+            }
+            if (btnShop == null)
+            {
+                var tr = canvas.transform.Find("BtnShop");
+                if (tr != null) btnShop = tr.GetComponent<Button>();
+            }
+            if (btnShop == null)
+            {
+                var go = GameObject.Find("BtnShop");
+                if (go != null) btnShop = go.GetComponent<Button>();
+            }
+
+            var shopView = BuildShopUIPanel(canvas, btnShop, defaultFont);
+
+            var orientMgr = canvas.GetComponent<OrientationManager>() ?? UnityEngine.Object.FindObjectOfType<OrientationManager>();
+            if (orientMgr != null && shopView != null && shopView.panelShop != null)
+            {
+                orientMgr.rtPanelShop = shopView.panelShop.GetComponent<RectTransform>();
+            }
+
+            if (gm != null)
+            {
+                gm.shopView = shopView;
+                if (shopView != null)
+                {
+                    shopView.Initialize(gm.OnBuyRequested);
+                    shopView.OnShopOpened = () =>
+                    {
+                        if (gm.economyService != null)
+                        {
+                            shopView.RefreshShop(gm.economyService, gm.Ore, gm.TotalEarned);
+                        }
+                    };
+
+                    if (Application.isPlaying && gm.economyService != null)
+                    {
+                        shopView.RefreshShop(gm.economyService, gm.Ore, gm.TotalEarned);
+                    }
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+
+            Debug.Log("[ForgeSetup] Successfully rebuilt & beautified Shop UI in active scene!");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("Shop UI Beautified", "Đã nâng cấp và làm đẹp bảng CÔNG XƯỞNG TỰ ĐỘNG HÓA thành công!\n- Đầy đủ 5 icon máy móc sắc nét\n- Tiêu đề mở rộng chuẩn chỉnh\n- Khung viền Dwarven Gold & Đá Basalt vương giả", "OK");
+            }
         }
     }
 }

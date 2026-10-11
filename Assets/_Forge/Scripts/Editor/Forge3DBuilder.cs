@@ -314,6 +314,7 @@ namespace Forge.EditorTools
             Material matEmber = mats["FurnaceEmber"];
             Material matWood = mats["Wood_Stump"];
             Material matBronze = mats["Bronze_Brass"];
+            Material matIngot = mats["Hot_Ingot"];
             Material matFloor = mats["Floor"];
 
 #if UNITY_EDITOR
@@ -333,13 +334,14 @@ namespace Forge.EditorTools
                     else if (n.Contains("bronze") || n.Contains("brass")) r.sharedMaterial = matBronze;
                     else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
                     else if (n.Contains("fire") || n.Contains("ember")) r.sharedMaterial = matFire;
+                    else if (n.Contains("hot") || n.Contains("ingot") || n.Contains("billet")) r.sharedMaterial = matIngot;
                     else if (n.Contains("wood") || n.Contains("stump") || n.Contains("bellow") || n.Contains("bucket")) r.sharedMaterial = matWood;
                     else
                     {
-                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 5)
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 6)
+                            r.sharedMaterials = new Material[] { matStone, matDarkIron, matBronze, matFire, matIngot, matWood };
+                        else if (r.sharedMaterials != null && r.sharedMaterials.Length >= 5)
                             r.sharedMaterials = new Material[] { matStone, matDarkIron, matBronze, matFire, matWood };
-                        else if (r.sharedMaterials != null && r.sharedMaterials.Length >= 4)
-                            r.sharedMaterials = new Material[] { matStone, matDarkIron, matFire, matWood };
                         else
                             r.sharedMaterial = matStone;
                     }
@@ -590,6 +592,7 @@ namespace Forge.EditorTools
             Material matHotIngot = mats["Hot_Ingot"];
             Material matWood = mats["Wood_Stump"];
             Material matLeather = mats.ContainsKey("Leather") ? mats["Leather"] : matWood;
+            Material matStone = mats.ContainsKey("Stone_Furnace") ? mats["Stone_Furnace"] : matDarkIron;
 
 #if UNITY_EDITOR
             var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Desk_Materials.obj");
@@ -599,21 +602,25 @@ namespace Forge.EditorTools
                 inst.name = "Desk_Materials_Mesh";
                 inst.transform.localPosition = Vector3.zero;
                 inst.transform.localRotation = Quaternion.identity;
-                inst.transform.localScale = new Vector3(1.35f, 1.35f, 1.35f);
+                inst.transform.localScale = Vector3.one;
                 var rends = inst.GetComponentsInChildren<Renderer>();
                 foreach (var r in rends)
                 {
                     string n = r.gameObject.name.ToLowerInvariant();
-                    if (n.Contains("steel")) r.sharedMaterial = matSteel;
-                    else if (n.Contains("bronze") || n.Contains("brass") || n.Contains("gold")) r.sharedMaterial = matBronze;
+                    if (n.Contains("stone") || n.Contains("rock")) r.sharedMaterial = matStone;
                     else if (n.Contains("crystal") || n.Contains("ore")) r.sharedMaterial = matCrystal;
-                    else if (n.Contains("hot") || n.Contains("ingot")) r.sharedMaterial = matHotIngot;
-                    else if (n.Contains("wood") || n.Contains("leather") || n.Contains("stump")) r.sharedMaterial = matLeather;
-                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else if (n.Contains("wood") || n.Contains("stump") || n.Contains("stand")) r.sharedMaterial = matWood;
+                    else if (n.Contains("leather") || n.Contains("grip") || n.Contains("mat")) r.sharedMaterial = matLeather;
+                    else if (n.Contains("steel") || n.Contains("damascus") || n.Contains("dagger") || n.Contains("blade")) r.sharedMaterial = matSteel;
+                    else if (n.Contains("bronze") || n.Contains("brass") || n.Contains("gold")) r.sharedMaterial = matBronze;
+                    else if (n.Contains("hot") || n.Contains("billet") || (n.Contains("ingot") && !n.Contains("steel") && !n.Contains("gold"))) r.sharedMaterial = matHotIngot;
+                    else if (n.Contains("dark") || n.Contains("iron") || n.Contains("tong")) r.sharedMaterial = matDarkIron;
                     else
                     {
-                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 6)
-                            r.sharedMaterials = new Material[] { matSteel, matBronze, matLeather, matCrystal, matDarkIron, matHotIngot };
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 8)
+                            r.sharedMaterials = new Material[] { matStone, matCrystal, matWood, matLeather, matSteel, matBronze, matDarkIron, matHotIngot };
+                        else if (r.sharedMaterials != null && r.sharedMaterials.Length >= 7)
+                            r.sharedMaterials = new Material[] { matStone, matCrystal, matLeather, matSteel, matBronze, matDarkIron, matHotIngot };
                         else
                             r.sharedMaterial = matSteel;
                     }
@@ -949,6 +956,93 @@ namespace Forge.EditorTools
                 CreatePart(PrimitiveType.Cube, $"Gold_Ingot_{b}", root.transform,
                     barPositions[b], new Vector3(0.14f, 0.045f, 0.07f), Quaternion.Euler(0f, 18f * b, 0f), matBronze);
             }
+
+            return root;
+        }
+
+        /// <summary>
+        /// Builds a Masterpiece 3D Weapon Rack with 3 Hero Swords standing majestically behind the workbench:
+        /// 1. Heavy Oak Display Rack Frame
+        /// 2. Left Sword: Knight's Damascus Longsword tilted at -8 deg
+        /// 3. Center Sword: Monumental Dragon Claymore standing upright with royal bronze eagle crossguard
+        /// 4. Right Sword: Ancient Dark Iron Executioner Blade tilted at +8 deg
+        /// </summary>
+        public static GameObject BuildBehindSwordRack(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
+        {
+            GameObject root = new GameObject("Behind_Sword_Rack");
+            root.transform.SetParent(parent, false);
+            root.transform.position = worldPos;
+            root.transform.rotation = worldRot;
+
+            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
+            Material matSteel = mats["Steel_Polished"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matLeather = mats.ContainsKey("Leather") ? mats["Leather"] : matDarkIron;
+
+            // 1. Heavy Oak Weapon Rack Stand
+            // Left & Right upright posts
+            CreatePart(PrimitiveType.Cube, "Rack_Post_L", root.transform,
+                new Vector3(-0.35f, 0.36f, 0f), new Vector3(0.05f, 0.72f, 0.06f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Rack_Post_R", root.transform,
+                new Vector3(0.35f, 0.36f, 0f), new Vector3(0.05f, 0.72f, 0.06f), Quaternion.identity, matWood);
+            // Lower and Upper crossbeams
+            CreatePart(PrimitiveType.Cube, "Rack_Beam_Bottom", root.transform,
+                new Vector3(0f, 0.06f, 0f), new Vector3(0.78f, 0.06f, 0.10f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Rack_Beam_Top", root.transform,
+                new Vector3(0f, 0.58f, 0f), new Vector3(0.76f, 0.05f, 0.07f), Quaternion.identity, matWood);
+            // Bronze Corner Reinforcements
+            CreatePart(PrimitiveType.Cube, "Rack_Bracket_L", root.transform,
+                new Vector3(-0.35f, 0.58f, -0.01f), new Vector3(0.065f, 0.065f, 0.08f), Quaternion.identity, matBronze);
+            CreatePart(PrimitiveType.Cube, "Rack_Bracket_R", root.transform,
+                new Vector3(0.35f, 0.58f, -0.01f), new Vector3(0.065f, 0.065f, 0.08f), Quaternion.identity, matBronze);
+
+            // 2. Left Sword: Knight's Damascus Longsword (tilt -8 deg)
+            GameObject swordL = new GameObject("Sword_Knight_L");
+            swordL.transform.SetParent(root.transform, false);
+            swordL.transform.localPosition = new Vector3(-0.19f, 0.08f, -0.02f);
+            swordL.transform.localRotation = Quaternion.Euler(0f, 0f, -8f);
+
+            CreatePart(PrimitiveType.Cube, "Blade", swordL.transform,
+                new Vector3(0f, 0.38f, 0f), new Vector3(0.045f, 0.72f, 0.012f), Quaternion.identity, matSteel);
+            CreatePart(PrimitiveType.Cube, "Crossguard", swordL.transform,
+                new Vector3(0f, 0.75f, 0f), new Vector3(0.18f, 0.028f, 0.025f), Quaternion.identity, matBronze);
+            CreatePart(PrimitiveType.Cylinder, "Grip", swordL.transform,
+                new Vector3(0f, 0.84f, 0f), new Vector3(0.024f, 0.08f, 0.024f), Quaternion.identity, matLeather);
+            CreatePart(PrimitiveType.Sphere, "Pommel", swordL.transform,
+                new Vector3(0f, 0.93f, 0f), new Vector3(0.045f, 0.045f, 0.045f), Quaternion.identity, matBronze);
+
+            // 3. Center Sword: Grand Dragon Claymore (Monumental upright greatsword)
+            GameObject swordCenter = new GameObject("Sword_Claymore_Center");
+            swordCenter.transform.SetParent(root.transform, false);
+            swordCenter.transform.localPosition = new Vector3(0.00f, 0.06f, -0.03f);
+            swordCenter.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
+            CreatePart(PrimitiveType.Cube, "Blade_Main", swordCenter.transform,
+                new Vector3(0f, 0.45f, 0f), new Vector3(0.065f, 0.88f, 0.015f), Quaternion.identity, matSteel);
+            CreatePart(PrimitiveType.Cube, "Blade_Fuller", swordCenter.transform,
+                new Vector3(0f, 0.45f, 0f), new Vector3(0.016f, 0.76f, 0.018f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Crossguard_Wings", swordCenter.transform,
+                new Vector3(0f, 0.90f, 0f), new Vector3(0.25f, 0.038f, 0.035f), Quaternion.identity, matBronze);
+            CreatePart(PrimitiveType.Cylinder, "Grip_TwoHanded", swordCenter.transform,
+                new Vector3(0f, 1.01f, 0f), new Vector3(0.028f, 0.10f, 0.028f), Quaternion.identity, matLeather);
+            CreatePart(PrimitiveType.Cube, "Pommel_Diamond", swordCenter.transform,
+                new Vector3(0f, 1.13f, 0f), new Vector3(0.055f, 0.055f, 0.045f), Quaternion.Euler(0f, 0f, 45f), matBronze);
+
+            // 4. Right Sword: Ancient Dark Iron Executioner Blade (tilt +8 deg)
+            GameObject swordR = new GameObject("Sword_Executioner_R");
+            swordR.transform.SetParent(root.transform, false);
+            swordR.transform.localPosition = new Vector3(0.19f, 0.08f, -0.02f);
+            swordR.transform.localRotation = Quaternion.Euler(0f, 0f, 8f);
+
+            CreatePart(PrimitiveType.Cube, "Blade", swordR.transform,
+                new Vector3(0f, 0.36f, 0f), new Vector3(0.050f, 0.68f, 0.012f), Quaternion.identity, matSteel);
+            CreatePart(PrimitiveType.Cube, "Crossguard", swordR.transform,
+                new Vector3(0f, 0.71f, 0f), new Vector3(0.16f, 0.026f, 0.026f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cylinder, "Grip", swordR.transform,
+                new Vector3(0f, 0.79f, 0f), new Vector3(0.024f, 0.075f, 0.024f), Quaternion.identity, matLeather);
+            CreatePart(PrimitiveType.Sphere, "Pommel", swordR.transform,
+                new Vector3(0f, 0.88f, 0f), new Vector3(0.042f, 0.042f, 0.042f), Quaternion.identity, matBronze);
 
             return root;
         }

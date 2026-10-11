@@ -15,17 +15,8 @@ namespace Forge
 
         public void Punch()
         {
-            if (SettingsService.Instance != null && !SettingsService.Instance.HapticsEnabled) return;
-
-#if UNITY_ANDROID || UNITY_IOS
-            Handheld.Vibrate();
-#endif
-
-            if (_punchCoroutine != null)
-            {
-                StopCoroutine(_punchCoroutine);
-            }
-            _punchCoroutine = StartCoroutine(PunchRoutine());
+            // Camera shake is disabled for 100% stable, smooth view
+            return;
         }
 
         private IEnumerator PunchRoutine()

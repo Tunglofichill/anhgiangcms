@@ -109,7 +109,8 @@ namespace Forge
             // Visual feedback
             if (furnaceVisual != null) furnaceVisual.PlayTapPunch();
             if (HammerVisual3D.Instance != null) HammerVisual3D.Instance.PlayStrike();
-            if (cameraPunch != null) cameraPunch.Punch();
+            // Camera shake disabled per user request: camera stays 100% still and smooth
+            // if (cameraPunch != null) cameraPunch.Punch();
             if (lightController != null) lightController.Pulse();
             if (audioService != null) audioService.PlayHit();
             if (worldView != null) worldView.PlayHitSpark(hitPos);

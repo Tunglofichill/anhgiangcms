@@ -121,6 +121,13 @@ namespace Forge
             if (shopView != null)
             {
                 shopView.Initialize(OnBuyRequested);
+                shopView.OnShopOpened = () =>
+                {
+                    if (economyService != null)
+                    {
+                        shopView.RefreshShop(economyService, ore, totalEarned);
+                    }
+                };
             }
 
             if (offlinePopupView != null)
@@ -262,7 +269,10 @@ namespace Forge
             }
         }
 
-        private void OnBuyRequested(string genOrUpgradeId)
+        public double Ore => ore;
+        public double TotalEarned => totalEarned;
+
+        public void OnBuyRequested(string genOrUpgradeId)
         {
             if (genOrUpgradeId.StartsWith("UP_"))
             {

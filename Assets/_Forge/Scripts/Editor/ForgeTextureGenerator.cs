@@ -25,6 +25,7 @@ namespace Forge.EditorTools
             SaveTexture("Tex_Damascus_Steel.png", GenerateDamascusSteelTexture(512, 512));
             SaveTexture("Tex_Hammered_Dark_Iron.png", GenerateHammeredIronTexture(512, 512));
             SaveTexture("Tex_Stone_Bricks.png", GenerateStoneBricksTexture(512, 512));
+            SaveTexture("Tex_Volcanic_Basalt.png", GenerateStoneBricksTexture(512, 512));
             SaveTexture("Tex_Burning_Embers.png", GenerateEmbersTexture(512, 512));
             SaveTexture("Tex_Polished_Bronze.png", GenerateBronzeTexture(512, 512));
             SaveTexture("Tex_Leather_Wrap.png", GenerateLeatherTexture(256, 256));
@@ -266,63 +267,52 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Warm Dwarven Golden Sandstone & Granite Masonry with warm golden chiselled highlights.
-        /// Banishes all cold grey tones and produces glowing royal hearth masonry!
+        /// Ancient Dwarven Granite & Basalt Hearth Masonry:
+        /// <summary>
+        /// Ancient Monumental Dwarven Basalt & Granite Masonry:
+        /// Seamless monumental chiseled volcanic rock face with rich mineral grain,
+        /// micro-chisel fractures, and cool slate charcoal undertones.
+        /// Zero fake vertical seams or plank lines - 100% authentic solid stone block texture.
         /// </summary>
         public static Texture2D GenerateStoneBricksTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color stoneLight = new Color(0.68f, 0.70f, 0.72f);
-            Color stoneDark = new Color(0.36f, 0.38f, 0.40f);
-            Color stoneCool = new Color(0.50f, 0.52f, 0.55f);
-            Color mortar = new Color(0.20f, 0.22f, 0.24f);
-            Color chiselHighlight = new Color(0.80f, 0.82f, 0.85f);
-
-            int brickRows = 8;
-            int brickCols = 4;
+            Color stoneDark = new Color(0.12f, 0.13f, 0.16f);
+            Color stoneBase = new Color(0.19f, 0.21f, 0.25f);
+            Color stoneLight = new Color(0.28f, 0.31f, 0.36f);
+            Color stoneHighlight = new Color(0.38f, 0.42f, 0.48f);
+            Color mineralFleck = new Color(0.50f, 0.54f, 0.60f);
 
             for (int y = 0; y < height; y++)
             {
                 float v = (float)y / height;
-                int row = Mathf.FloorToInt(v * brickRows);
-                float rowFrac = (v * brickRows) - row;
-
-                // Alternate row stagger
-                float uShift = (row % 2 == 0) ? 0f : 0.5f;
-
                 for (int x = 0; x < width; x++)
                 {
                     float u = (float)x / width;
-                    float shiftedU = (u + uShift) % 1.0f;
-                    int col = Mathf.FloorToInt(shiftedU * brickCols);
-                    float colFrac = (shiftedU * brickCols) - col;
 
-                    // Mortar seams
-                    bool isMortar = (rowFrac < 0.07f || rowFrac > 0.93f || colFrac < 0.05f || colFrac > 0.95f);
+                    // Multi-octave natural granite & volcanic rock noise
+                    float largeFacet = Mathf.PerlinNoise(u * 5.5f, v * 5.5f);
+                    float medGrain = Mathf.PerlinNoise(u * 18f + 7.3f, v * 18f + 3.1f) * 0.45f;
+                    float chiselMarks = Mathf.PerlinNoise(u * 42f + 12.8f, v * 42f + 9.4f) * 0.25f;
+                    float microFleck = Mathf.PerlinNoise(u * 90f, v * 90f) * 0.15f;
 
-                    if (isMortar)
+                    float rockVal = Mathf.Clamp01(largeFacet * 0.55f + medGrain + chiselMarks + microFleck);
+
+                    Color c = Color.Lerp(stoneDark, stoneBase, rockVal * 1.5f);
+                    if (rockVal > 0.45f)
                     {
-                        float mNoise = Mathf.PerlinNoise(u * 40f, v * 40f) * 0.3f;
-                        tex.SetPixel(x, y, Color.Lerp(mortar, stoneDark, mNoise));
+                        c = Color.Lerp(c, stoneLight, (rockVal - 0.45f) * 1.8f);
                     }
-                    else
+                    if (rockVal > 0.75f)
                     {
-                        // Stone variation per brick
-                        float brickSeed = (row * 13 + col * 37) % 100 * 0.01f;
-                        float stoneNoise = Mathf.PerlinNoise(u * 18f + brickSeed, v * 18f + brickSeed);
-                        float fineChisel = Mathf.PerlinNoise(u * 50f, v * 50f) * 0.25f;
-
-                        Color brickCol = Color.Lerp(stoneDark, stoneLight, stoneNoise);
-                        brickCol = Color.Lerp(brickCol, stoneCool, fineChisel);
-
-                        // Chiselled cool highlight edge
-                        if (rowFrac > 0.86f || colFrac < 0.12f)
-                        {
-                            brickCol = Color.Lerp(brickCol, chiselHighlight, 0.40f);
-                        }
-
-                        tex.SetPixel(x, y, brickCol);
+                        c = Color.Lerp(c, stoneHighlight, (rockVal - 0.75f) * 3.0f);
                     }
+                    if (microFleck > 0.12f && rockVal > 0.50f)
+                    {
+                        c = Color.Lerp(c, mineralFleck, 0.35f);
+                    }
+
+                    tex.SetPixel(x, y, c);
                 }
             }
             tex.Apply();
@@ -385,10 +375,10 @@ namespace Forge.EditorTools
         public static Texture2D GenerateBronzeTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color goldDeep = new Color(0.85f, 0.62f, 0.12f);
-            Color goldPure = new Color(1.00f, 0.84f, 0.24f);
-            Color goldHighlight = new Color(1.00f, 0.96f, 0.65f);
-            Color goldSpecular = new Color(1.00f, 1.00f, 0.92f);
+            Color goldDeep = new Color(0.92f, 0.72f, 0.14f);
+            Color goldPure = new Color(1.00f, 0.86f, 0.22f);
+            Color goldHighlight = new Color(1.00f, 0.95f, 0.55f);
+            Color goldSpecular = new Color(1.00f, 1.00f, 0.88f);
 
             for (int y = 0; y < height; y++)
             {
@@ -402,13 +392,13 @@ namespace Forge.EditorTools
                     float pattern = p1 + p2;
 
                     Color c = Color.Lerp(goldDeep, goldPure, pattern);
-                    if (pattern > 0.70f)
+                    if (pattern > 0.65f)
                     {
-                        c = Color.Lerp(c, goldHighlight, (pattern - 0.70f) * 2.8f);
+                        c = Color.Lerp(c, goldHighlight, (pattern - 0.65f) * 2.8f);
                     }
-                    if (pattern > 0.90f)
+                    if (pattern > 0.88f)
                     {
-                        c = Color.Lerp(c, goldSpecular, (pattern - 0.90f) * 8.0f);
+                        c = Color.Lerp(c, goldSpecular, (pattern - 0.88f) * 8.0f);
                     }
                     tex.SetPixel(x, y, c);
                 }

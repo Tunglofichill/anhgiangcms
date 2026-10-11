@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gen_G2
   m_EditorClassIdentifier: Assembly-CSharp::Forge.GeneratorDefinition
   id: G2
-  machineName: "C\xFAi \u0110\xE0o Qu\u1EB7ng"
+  machineName: "C\u0169i \u0110\xE0o Qu\u1EB7ng"
   description: 
   baseCost: 100
   baseOutput: 2

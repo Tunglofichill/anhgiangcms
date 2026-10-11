@@ -106,8 +106,10 @@ namespace Forge
                 if (btnBuy != null)
                 {
                     btnBuy.interactable = false;
+                    var img = btnBuy.GetComponent<Image>();
+                    if (img != null) img.color = new Color(0.22f, 0.22f, 0.26f, 0.85f);
                     var tBuy = btnBuy.GetComponentInChildren<Text>();
-                    if (tBuy != null) tBuy.text = LocalizationService.Get("UPGRADE_BTN");
+                    if (tBuy != null) { tBuy.text = "🔒 Khóa"; tBuy.color = new Color(0.6f, 0.6f, 0.65f); }
                 }
                 return;
             }
@@ -128,8 +130,18 @@ namespace Forge
             if (btnBuy != null)
             {
                 btnBuy.interactable = canAfford;
+                var img = btnBuy.GetComponent<Image>();
                 var tBuy = btnBuy.GetComponentInChildren<Text>();
-                if (tBuy != null) tBuy.text = LocalizationService.Get("UPGRADE_BTN");
+                if (canAfford)
+                {
+                    if (img != null) img.color = new Color(0.18f, 0.65f, 0.30f, 1f); // Vibrant Emerald Green
+                    if (tBuy != null) { tBuy.text = LocalizationService.Get("UPGRADE_BTN"); tBuy.color = Color.white; }
+                }
+                else
+                {
+                    if (img != null) img.color = new Color(0.30f, 0.30f, 0.35f, 0.85f); // Soft Slate Gray
+                    if (tBuy != null) { tBuy.text = "Chưa Đủ"; tBuy.color = new Color(0.75f, 0.75f, 0.80f); }
+                }
             }
         }
 
@@ -191,10 +203,22 @@ namespace Forge
             if (btnBuy != null)
             {
                 btnBuy.interactable = !isMax && canAfford;
+                var img = btnBuy.GetComponent<Image>();
                 var tBuy = btnBuy.GetComponentInChildren<Text>();
-                if (tBuy != null)
+                if (isMax)
                 {
-                    tBuy.text = isMax ? LocalizationService.Get("UPGRADE_MAX") : LocalizationService.Get("UPGRADE_BTN");
+                    if (img != null) img.color = new Color(0.20f, 0.45f, 0.25f, 0.85f);
+                    if (tBuy != null) { tBuy.text = LocalizationService.Get("UPGRADE_MAX"); tBuy.color = new Color(0.8f, 1f, 0.8f); }
+                }
+                else if (canAfford)
+                {
+                    if (img != null) img.color = new Color(0.18f, 0.65f, 0.30f, 1f);
+                    if (tBuy != null) { tBuy.text = LocalizationService.Get("UPGRADE_BTN"); tBuy.color = Color.white; }
+                }
+                else
+                {
+                    if (img != null) img.color = new Color(0.30f, 0.30f, 0.35f, 0.85f);
+                    if (tBuy != null) { tBuy.text = "Chưa Đủ"; tBuy.color = new Color(0.75f, 0.75f, 0.80f); }
                 }
             }
         }

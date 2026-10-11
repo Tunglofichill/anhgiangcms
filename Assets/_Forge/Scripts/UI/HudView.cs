@@ -81,8 +81,12 @@ namespace Forge
 
         public static string FormatNumber(double val)
         {
-            if (val < 0) val = 0;
+            if (val <= 0) return "0";
 
+            if (val < 10.0)
+            {
+                return (val % 1 == 0) ? val.ToString("0") : val.ToString("0.#");
+            }
             if (val < 1000.0)
             {
                 return Math.Floor(val).ToString("N0");
