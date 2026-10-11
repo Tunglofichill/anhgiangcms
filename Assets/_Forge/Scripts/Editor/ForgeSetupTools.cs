@@ -322,6 +322,15 @@ namespace Forge.EditorTools
             dict["Anvil"] = CreateMat("Anvil", new Color(0.25f, 0.25f, 0.28f), 0.7f, 0.4f);
             dict["FurnaceEmber"] = CreateMat("FurnaceEmber", new Color(0.16f, 0.16f, 0.18f), 0.65f, 0.45f, new Color(1.0f, 0.415f, 0.10f) * 1.5f);
 
+            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.85f, 0.88f, 0.92f), 0.85f, 0.75f);
+            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.20f, 0.20f, 0.24f), 0.75f, 0.35f);
+            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.38f, 0.36f, 0.35f), 0.08f, 0.20f);
+            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", new Color(1.0f, 0.45f, 0.10f), 0.1f, 0.8f, new Color(1.0f, 0.50f, 0.10f) * 3.5f);
+            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", new Color(1.0f, 0.35f, 0.05f), 0.3f, 0.6f, new Color(1.0f, 0.42f, 0.08f) * 2.8f);
+            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(0.85f, 0.65f, 0.28f), 0.80f, 0.60f);
+            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", new Color(0.20f, 0.85f, 0.80f), 0.40f, 0.85f, new Color(0.10f, 0.70f, 0.65f) * 1.6f);
+            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.38f, 0.28f, 0.20f), 0.05f, 0.25f, null, texWood, new Vector2(2f, 2f));
+
             // Greybox machine colors
             dict["G1"] = CreateMat("G1", new Color(0.85f, 0.64f, 0.25f), 0.5f, 0.5f);
             dict["G2"] = CreateMat("G2", new Color(0.43f, 0.54f, 0.35f), 0.5f, 0.5f);
@@ -350,23 +359,13 @@ namespace Forge.EditorTools
             {
                 string id = $"G{i}";
                 string prefabPath = $"{PREFABS_DIR}/Machine_{id}.prefab";
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
 
-                if (prefab == null)
-                {
-                    GameObject tempGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    tempGo.name = $"Machine_{id}";
-                    tempGo.transform.localScale = new Vector3(0.24f, 0.18f, 0.24f);
+                GameObject tempGo = Forge3DBuilder.BuildMachine3D(id, null, Vector3.zero, Quaternion.identity, mats);
+                tempGo.name = $"Machine_{id}";
 
-                    if (mats.TryGetValue(id, out var mat))
-                    {
-                        tempGo.GetComponent<Renderer>().sharedMaterial = mat;
-                    }
-
-                    prefab = PrefabUtility.SaveAsPrefabAsset(tempGo, prefabPath);
-                    UnityEngine.Object.DestroyImmediate(tempGo);
-                    Debug.Log($"[ForgeSetup] Created Prefab {prefabPath}");
-                }
+                var prefab = PrefabUtility.SaveAsPrefabAsset(tempGo, prefabPath);
+                UnityEngine.Object.DestroyImmediate(tempGo);
+                Debug.Log($"[ForgeSetup] Created 3D Prefab {prefabPath}");
                 dict[id] = prefab;
             }
             AssetDatabase.SaveAssets();
@@ -494,30 +493,30 @@ namespace Forge.EditorTools
             rimLight.intensity = 0.20f;
             rimLight.shadows = LightShadows.None;
 
-            // Furnace_Point: soft warm amber glow (1.6 intensity)
+            // Furnace_Point: warm amber glow inside 3D hearth (radiates onto desk & anvil)
             GameObject goFurnacePoint = new GameObject("Furnace_Point");
             goFurnacePoint.transform.SetParent(goLighting.transform);
-            goFurnacePoint.transform.position = new Vector3(0.968f, 1.55f, 0.10f);
+            goFurnacePoint.transform.position = new Vector3(1.05f, 1.25f, -0.15f);
             Light furnaceLight = goFurnacePoint.AddComponent<Light>();
             furnaceLight.type = LightType.Point;
             furnaceLight.color = new Color(1.0f, 0.60f, 0.20f);
-            furnaceLight.intensity = 1.6f;
-            furnaceLight.range = 2.2f;
+            furnaceLight.intensity = 1.8f;
+            furnaceLight.range = 2.8f;
 
             // EmissiveHint_Furnace
             GameObject goEmissiveHint = new GameObject("EmissiveHint_Furnace");
             goEmissiveHint.transform.SetParent(goLighting.transform);
-            goEmissiveHint.transform.position = new Vector3(0.968f, 1.40f, 0.10f);
+            goEmissiveHint.transform.position = new Vector3(1.05f, 1.15f, -0.15f);
             Light hintLight = goEmissiveHint.AddComponent<Light>();
             hintLight.type = LightType.Point;
             hintLight.color = new Color(1.0f, 0.40f, 0.10f);
-            hintLight.intensity = 0.5f;
-            hintLight.range = 0.9f;
+            hintLight.intensity = 0.6f;
+            hintLight.range = 1.2f;
 
             var lightCtrl = goLighting.AddComponent<ForgeLightController>();
             lightCtrl.furnacePointLight = furnaceLight;
-            lightCtrl.defaultBaseIntensity = 1.6f;
-            lightCtrl.upgradedBaseIntensity = 2.2f;
+            lightCtrl.defaultBaseIntensity = 1.8f;
+            lightCtrl.upgradedBaseIntensity = 2.6f;
 
             // 2.2 Environment
             GameObject goEnv = new GameObject("Environment");
@@ -554,122 +553,88 @@ namespace Forge.EditorTools
             if (colDesk != null) UnityEngine.Object.DestroyImmediate(colDesk);
             if (mats.TryGetValue("Desk", out var mDesk)) goDesk.GetComponent<Renderer>().sharedMaterial = mDesk;
 
-            // Hero Anvil (Sprite & Tap Target) - User custom placement & scale
-            GameObject goAnvil = new GameObject("Anvil");
+            // 3D Hero Anvil (Sculpted 3D Oak Stump, Base, Waist, Steel Face, Horn, Heel & Glowing Ingot)
+            GameObject goAnvil = Forge3DBuilder.BuildHeroAnvil(goEnv.transform, new Vector3(-0.72f, 0.80f, -0.05f), Quaternion.Euler(0f, 18f, 0f), mats);
+            goAnvil.name = "Anvil";
             goAnvil.layer = clickableLayer;
-            goAnvil.transform.SetParent(goEnv.transform);
-            goAnvil.transform.position = new Vector3(-1.314f, 1.107f, 0.158f);
-            goAnvil.transform.rotation = Quaternion.Euler(-0.268f, -18.437f, -0.804f);
-            goAnvil.transform.localScale = new Vector3(0.2481426f, 0.2106948f, 0.38f);
-            var srAnvil = goAnvil.AddComponent<SpriteRenderer>();
-            var spAnvil = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Forge/Art/Textures/Hero_Anvil.png");
-            if (spAnvil != null) srAnvil.sprite = spAnvil;
-            srAnvil.sortingOrder = 2;
 
-            // BoxCollider for Anvil - Full sprite coverage
+            // BoxCollider for Anvil - Full 3D Coverage
             var boxAnvil = goAnvil.AddComponent<BoxCollider>();
-            boxAnvil.size = new Vector3(7.8f, 7.2f, 2.0f);
-            boxAnvil.center = new Vector3(0f, -0.8f, 0f);
+            boxAnvil.size = new Vector3(1.15f, 1.20f, 0.85f);
+            boxAnvil.center = new Vector3(0f, 0.52f, 0f);
 
             var clickAnvil = goAnvil.AddComponent<ClickForge>();
 
-            // Contact Shadow for Anvil
-            GameObject goAnvilShadow = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            goAnvilShadow.name = "Anvil_Shadow";
-            goAnvilShadow.transform.SetParent(goAnvil.transform);
-            goAnvilShadow.transform.localPosition = new Vector3(0f, -0.42f, 0f);
-            goAnvilShadow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            goAnvilShadow.transform.localScale = new Vector3(0.55f, 0.32f, 1f);
-            var colAS = goAnvilShadow.GetComponent<Collider>();
-            if (colAS != null) UnityEngine.Object.DestroyImmediate(colAS);
-            if (mats.TryGetValue("Floor", out var mShadow)) goAnvilShadow.GetComponent<Renderer>().sharedMaterial = mShadow;
+            // 3D Interactive Smith Hammer (Búa Rèn 3D vung đập khi click)
+            GameObject goHammer = Forge3DBuilder.BuildHeroHammer(goEnv.transform, new Vector3(-1.38f, 0.82f, -0.05f), Quaternion.Euler(30f, 22f, -20f), mats);
 
-            // Hero Furnace (Sprite & Tap Target) - User custom placement & scale
-            GameObject goFurnace = new GameObject("Furnace");
+            // 3D Hero Furnace (Stone Masonry Hearth, Arched Chamber, Fiery Embers & Chimney Stack)
+            GameObject goFurnace = Forge3DBuilder.BuildHeroFurnace(goEnv.transform, new Vector3(1.05f, 0.80f, 0.05f), Quaternion.Euler(0f, -24f, 0f), mats);
             goFurnace.name = "Furnace";
             goFurnace.tag = "Furnace";
             goFurnace.layer = clickableLayer;
-            goFurnace.transform.SetParent(goEnv.transform);
-            goFurnace.transform.position = new Vector3(0.968f, 1.638f, 0.04f);
-            goFurnace.transform.localScale = new Vector3(0.35216f, 0.34776f, 0.55f);
 
-            var srFurnace = goFurnace.AddComponent<SpriteRenderer>();
-            var spFurnace = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Forge/Art/Textures/Hero_Furnace.png");
-            if (spFurnace != null) srFurnace.sprite = spFurnace;
-            srFurnace.sortingOrder = 1;
-
-            // Contact Shadow for Furnace
-            GameObject goFurnaceShadow = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            goFurnaceShadow.name = "Furnace_Shadow";
-            goFurnaceShadow.transform.SetParent(goFurnace.transform);
-            goFurnaceShadow.transform.localPosition = new Vector3(0f, -0.45f, 0f);
-            goFurnaceShadow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            goFurnaceShadow.transform.localScale = new Vector3(0.75f, 0.42f, 1f);
-            var colFS = goFurnaceShadow.GetComponent<Collider>();
-            if (colFS != null) UnityEngine.Object.DestroyImmediate(colFS);
-            if (mats.TryGetValue("Floor", out mShadow)) goFurnaceShadow.GetComponent<Renderer>().sharedMaterial = mShadow;
-
-            // BoxCollider for Furnace - Full visual coverage (covers all 1024x1024 sprite bounds!)
-            var boxCol = goFurnace.AddComponent<BoxCollider>();
-            boxCol.size = new Vector3(8.2f, 9.6f, 2.0f);
-            boxCol.center = Vector3.zero;
+            var boxFurnace = goFurnace.AddComponent<BoxCollider>();
+            boxFurnace.size = new Vector3(1.30f, 1.85f, 1.30f);
+            boxFurnace.center = new Vector3(0f, 0.90f, 0f);
 
             var furnaceVisual = goFurnace.AddComponent<FurnaceVisual>();
-            furnaceVisual.spriteRenderer = srFurnace;
             furnaceVisual.visualTransform = goFurnace.transform;
 
             var clickForge = goFurnace.AddComponent<ClickForge>();
             clickForge.furnaceVisual = furnaceVisual;
 
-            // Decors (Non-blocking):
-            // (Decor_Lamp removed per request)
-
-            // Decor_OreShelf: pos (-0.75, 0.80, 0.30) - M3
-            GameObject goOreShelf = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // Decors 3D (Non-blocking):
+            // Decor_OreShelf 3D: pos (-1.75, 0.80, 0.35) - M3
+            GameObject goOreShelf = Forge3DBuilder.BuildOreShelf3D(goEnv.transform, new Vector3(-1.75f, 0.80f, 0.35f), Quaternion.Euler(0f, 22f, 0f), mats);
             goOreShelf.name = "Decor_OreShelf";
-            goOreShelf.transform.SetParent(goEnv.transform);
-            goOreShelf.transform.position = new Vector3(-0.75f, 0.92f, 0.30f);
-            goOreShelf.transform.localScale = new Vector3(0.28f, 0.24f, 0.20f);
-            var colOreShelf = goOreShelf.GetComponent<Collider>();
-            if (colOreShelf != null) UnityEngine.Object.DestroyImmediate(colOreShelf);
-            if (mats.TryGetValue("G2", out var mG2)) goOreShelf.GetComponent<Renderer>().sharedMaterial = mG2;
             goOreShelf.SetActive(false);
 
-            // Decor_SmokeStack: pos (0.20, 0.80, 0.30) - M4
-            GameObject goSmokeStack = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            goSmokeStack.name = "Decor_SmokeStack";
-            goSmokeStack.transform.SetParent(goEnv.transform);
-            goSmokeStack.transform.position = new Vector3(0.20f, 1.05f, 0.30f);
-            goSmokeStack.transform.localScale = new Vector3(0.12f, 0.35f, 0.12f);
-            var colSmoke = goSmokeStack.GetComponent<Collider>();
-            if (colSmoke != null) UnityEngine.Object.DestroyImmediate(colSmoke);
-            if (mats.TryGetValue("Decor", out var mDecor)) goSmokeStack.GetComponent<Renderer>().sharedMaterial = mDecor;
+            // Decor_SmokeStack 3D: pos (0.20, 0.80, 0.30) - M4
+            GameObject goSmokeStack = new GameObject("Decor_SmokeStack");
+            goSmokeStack.transform.SetParent(goEnv.transform, false);
+            goSmokeStack.transform.position = new Vector3(0.20f, 0.80f, 0.30f);
+            var pipeBase = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pipeBase.name = "Flange";
+            pipeBase.transform.SetParent(goSmokeStack.transform, false);
+            pipeBase.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            pipeBase.transform.localScale = new Vector3(0.18f, 0.05f, 0.18f);
+            var c1 = pipeBase.GetComponent<Collider>(); if (c1 != null) UnityEngine.Object.DestroyImmediate(c1);
+            if (mats.TryGetValue("Dark_Iron", out var mDI)) pipeBase.GetComponent<Renderer>().sharedMaterial = mDI;
+            var pipe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pipe.name = "Pipe";
+            pipe.transform.SetParent(goSmokeStack.transform, false);
+            pipe.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+            pipe.transform.localScale = new Vector3(0.12f, 0.20f, 0.12f);
+            var c2 = pipe.GetComponent<Collider>(); if (c2 != null) UnityEngine.Object.DestroyImmediate(c2);
+            if (mats.TryGetValue("Bronze_Brass", out var mBB)) pipe.GetComponent<Renderer>().sharedMaterial = mBB;
             goSmokeStack.SetActive(false);
 
-            // Decor_Sign: pos (0.00, 1.55, 0.55) rot (0, 180, 0) - M5
-            GameObject goSign = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            goSign.name = "Decor_Sign";
-            goSign.transform.SetParent(goEnv.transform);
+            // Decor_Sign 3D: pos (0.00, 1.55, 0.55) rot (0, 180, 0) - M5
+            GameObject goSign = new GameObject("Decor_Sign");
+            goSign.transform.SetParent(goEnv.transform, false);
             goSign.transform.position = new Vector3(0.00f, 1.55f, 0.55f);
             goSign.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            goSign.transform.localScale = new Vector3(0.7f, 0.25f, 0.08f);
-            var colSign = goSign.GetComponent<Collider>();
-            if (colSign != null) UnityEngine.Object.DestroyImmediate(colSign);
-            if (mats.TryGetValue("Decor", out mDecor)) goSign.GetComponent<Renderer>().sharedMaterial = mDecor;
+            var signBoard = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            signBoard.name = "Board";
+            signBoard.transform.SetParent(goSign.transform, false);
+            signBoard.transform.localScale = new Vector3(0.70f, 0.25f, 0.06f);
+            var c3 = signBoard.GetComponent<Collider>(); if (c3 != null) UnityEngine.Object.DestroyImmediate(c3);
+            if (mats.TryGetValue("Wood_Stump", out var mWS)) signBoard.GetComponent<Renderer>().sharedMaterial = mWS;
+            var signRim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            signRim.name = "Rim";
+            signRim.transform.SetParent(goSign.transform, false);
+            signRim.transform.localScale = new Vector3(0.74f, 0.03f, 0.07f);
+            var c4 = signRim.GetComponent<Collider>(); if (c4 != null) UnityEngine.Object.DestroyImmediate(c4);
+            if (mats.TryGetValue("Bronze_Brass", out mBB)) signRim.GetComponent<Renderer>().sharedMaterial = mBB;
             goSign.SetActive(false);
 
-            // Decor_Chest: pos (0.70, 0.80, 0.10) - M7
-            GameObject goChest = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // Decor_Chest 3D: pos (1.85, 0.80, 0.20) - M7
+            GameObject goChest = Forge3DBuilder.BuildChest3D(goEnv.transform, new Vector3(1.85f, 0.80f, 0.20f), Quaternion.Euler(0f, -22f, 0f), mats);
             goChest.name = "Decor_Chest";
-            goChest.transform.SetParent(goEnv.transform);
-            goChest.transform.position = new Vector3(0.70f, 0.90f, 0.10f);
-            goChest.transform.localScale = new Vector3(0.28f, 0.20f, 0.22f);
-            var colChest = goChest.GetComponent<Collider>();
-            if (colChest != null) UnityEngine.Object.DestroyImmediate(colChest);
-            if (mats.TryGetValue("Decor", out mDecor)) goChest.GetComponent<Renderer>().sharedMaterial = mDecor;
             goChest.SetActive(false);
 
-            // 2.3 Slots & Machines
+            // 2.3 Slots & Machines 3D
             GameObject goSlots = new GameObject("Slots");
             goSlots.transform.SetParent(goWorld.transform);
 
@@ -692,14 +657,8 @@ namespace Forge.EditorTools
                 goSlot.transform.rotation = sInfo.rot;
 
                 string mKey = $"G{i + 1}";
-                GameObject goMach = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                GameObject goMach = Forge3DBuilder.BuildMachine3D(mKey, goSlot.transform, Vector3.zero, Quaternion.identity, mats);
                 goMach.name = $"Machine_{mKey}";
-                goMach.transform.SetParent(goSlot.transform);
-                goMach.transform.localPosition = new Vector3(0f, 0.16f, 0f);
-                goMach.transform.localRotation = Quaternion.identity;
-                goMach.transform.localScale = new Vector3(0.24f, 0.16f, 0.24f);
-
-                if (mats.TryGetValue(mKey, out var mMat)) goMach.GetComponent<Renderer>().sharedMaterial = mMat;
                 goMach.SetActive(false);
                 machineGos[i] = goMach;
             }
@@ -809,6 +768,7 @@ namespace Forge.EditorTools
             cam.farClipPlane = 60f;
             goCam.AddComponent<AudioListener>();
             var camPunch = goCam.AddComponent<CameraPunch>();
+            var camParallax = goCam.AddComponent<Forge.CameraParallax3D>();
             var camData = goCam.AddComponent<UniversalAdditionalCameraData>();
             camData.renderPostProcessing = true;
 

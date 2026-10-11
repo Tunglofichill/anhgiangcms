@@ -30,21 +30,30 @@ Trò chơi được phát triển theo tiêu chuẩn kỹ thuật hiện đại 
 
 ## ✨ 2. Tính Năng Nổi Bật
 
-- 🔨 **Tương Tác Đe Rèn 0ms Latency:** Cơ chế Clicker Raycast 3D phản hồi tức thì kèm hiệu ứng rung màn hình (*Camera Punch*), tia lửa phát sáng và âm thanh đe búa kim loại sống động.
-- ⚒️ **Hệ Thống Nâng Cấp Búa Rèn & Lò Nung 3D (Tools & Forge Upgrades):**
+- 🔨 **Tương Tác Đe Rèn 3D & Búa Rèn Động (Interactive 3D Smithing):** 
+  - Mô hình **Đe Rèn 3D Sử Thi** điêu khắc tỉ mỉ với đế gỗ sồi cổ thụ, đai sắt gia cố, mặt đe thép tôi bóng loáng và thỏi phôi quặng nóng đỏ phát quang (`Hot_Ingot`).
+  - **Búa Rèn 3D Tương Tác (`HammerVisual3D.cs`)**: Cán gỗ, đầu búa bát giác hắc thiết tự động vung đập giáng xuống đe `CLANG!` kèm độ nảy đàn hồi (*rebound damping*) và tia lửa phát sáng mỗi lần người chơi nhấp chuột.
+- 🔥 **Lò Nung Đá Vòm 3D & Chiếu Sáng Động (Dynamic 3D Hearth):**
+  - Cấu trúc lò nung đá vòm cong 3D (`Stone_Furnace`) với lòng than củi cháy rực (`Furnace_Fire`), ống khói vương miện sắt.
+  - Đèn URP Point Light đặt trực tiếp trong buồng lửa, tỏa ánh sáng vàng cam chân thực lên bề mặt gỗ và đe rèn theo thời gian thực.
+- ⚙️ **Hệ Thống 5 Thế Hệ Máy Móc 3D Cơ Khí Riêng Biệt (Procedural 3D Machinery):**
+  - `G1: Búa Tí Hon (Tiny Hammer)` — Trụ gỗ sồi, bánh răng cam và cánh tay đòn búa gõ tự động mini.
+  - `G2: Xe Khoan Quặng (Ore Drill)` — Xe goòng 4 bánh sắt, giá đỡ xoắn ốc và mũi khoan quặng góc xiên.
+  - `G3: Lò Luyện Kim 3D (Coal Smelter)` — Chân kiềng 3 chạc hắc thiết đỡ nồi nấu kim loại bằng đồng rực sáng.
+  - `G4: Cối Xay Hơi Nước (Steam Mill)` — Bệ máy gang, bánh đà đồng khổng lồ, xi lanh piston và đồng hồ đo áp suất.
+  - `G5: Golem Thợ Rèn Tự Hành (Master Automaton)` — Robot Dwarven với chân trụ, giáp ngực, lõi ma thuật phát sáng, mũ visor, cầm kìm kẹp và búa tạ.
+- 📐 **Hiệu Ứng Thị Sai Chiều Sâu 3D (3D Camera Parallax):**
+  - Camera URP tự động xoay nghiêng mượt mà theo tọa độ chuột (`CameraParallax3D.cs`), tôn lên độ sâu không gian 3 chiều và bóng đổ thực của xưởng rèn.
+- ⚒️ **Hệ Thống Nâng Cấp Búa Rèn & Lò Nung (Tools & Forge Upgrades):**
   - **Búa Rèn Thần Binh (`UP_HAMMER`):** Gia tăng uy lực mỗi cú đập (*Tap Power*), mở rộng sản lượng quặng khai thác tức thời.
-  - **Lò Nung Nhiệt Hạch (`UP_FURNACE`):** Tăng theo % toàn bộ tổng sản lượng công xưởng + Hiệu ứng ánh sáng Point Light 3D rực lửa theo cấp độ.
+  - **Lò Nung Nhiệt Hạch (`UP_FURNACE`):** Tăng theo % toàn bộ tổng sản lượng công xưởng + Cường hóa ánh sáng Point Light 3D rực lửa theo cấp độ.
   - **Găng Tay Da Rồng (`UP_GLOVES`):** Kích hoạt tỷ lệ Bạo Kích (*Critical Strike* x5 Quặng) hiển thị chữ nổ Ruby rực lửa `💥 CRIT!`.
   - **Dầu Tôi Huyền Bí (`UP_OIL`):** Gia tăng tốc độ khai thác tự động của toàn bộ dàn máy móc (+15% DPS/cấp).
 - 🛒 **Cửa Hàng Công Xưởng 2 Tab Chuyên Biệt (Two-Tab Workshop UI):**
   - **Tab 1: ⚙️ DÂY CHUYỀN MÁY MÓC (G1..G5)** — Mua sắm và nâng cấp các trạm máy tự động hóa từ *Tay Búa Tí Hon* đến *Robot Thợ Cả*.
   - **Tab 2: 🔨 BÚA & LÒ NUNG (Tools & Forge)** — Nâng cấp vũ khí thợ rèn, cường hóa lò nhiệt hạch và kích hoạt bạo kích.
-- ⚙️ **Hệ Thống Tự Động Hóa 5 Thế Hệ Máy Móc:**
-  - `G1: Búa Tí Hon (Tiny Hammer)` — Sản lượng 1 quặng/s
-  - `G2: Mũi Khoan Quặng (Ore Drill)` — Sản lượng 5 quặng/s
-  - `G3: Lò Than Cổ (Coal Smelter)` — Sản lượng 32 quặng/s
-  - `G4: Cối Xay Cơ Học (Steam Mill)` — Sản lượng 260 quặng/s
-  - `G5: Người Máy Tự Hành (Master Automaton)` — Sản lượng 1,400 quặng/s
+- 🏺 **Đạo Cụ Xưởng Rèn 3D Mở Khóa Theo Cột Mốc (Milestone 3D Props):**
+  - Giá để quặng pha lê 3D phát sáng đa diện (`Decor_OreShelf`), Rương kho báu mở nắp lộ các thỏi vàng 3D (`Decor_Chest`), Ống xả khói đồng (`Decor_SmokeStack`) và Bảng hiệu xưởng rèn cổ (`Decor_Sign`).
 - 📈 **Đường Cong Kinh Tế Lũy Tiến:** Cân bằng toán học chuẩn xác $\text{Cost}(n) = \text{BaseCost} \times (1.15)^n$ cùng các mốc đột phá (*Milestone Multipliers*) x2, x4 giữ chân người chơi.
 - 🏆 **8 Cấp Bậc Danh Hiệu Sử Thi:** Từ *Tập Sự (Apprentice)* đến *Đại Sư Thần Binh (Grandmaster Smith)*.
 - 🌐 **Hỗ Trợ Song Ngữ (VI / EN):** Chuyển đổi ngôn ngữ Tiếng Việt và Tiếng Anh thời gian thực thông qua hệ thống Hybrid Typography (Phôi nút kim loại kết hợp Dynamic Text).

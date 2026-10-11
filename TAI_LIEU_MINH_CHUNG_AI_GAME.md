@@ -85,6 +85,13 @@ Gemini 3.8 đóng vai trò Kỹ sư trưởng (*Lead Software Engineer*). Mô h�
 5. **Hệ thống Nâng Cấp Búa Rèn & Lò Nung (Hybrid 2D UI + 3D Lighting Integration):**
    - Mở rộng kiến trúc kinh tế với 4 vật phẩm trang bị (`UP_HAMMER`, `UP_FURNACE`, `UP_GLOVES`, `UP_OIL`) kết nối trực tiếp với ánh sáng URP Point Light (`ForgeLightController.cs`), tạo phản hồi thị giác khi lò nung rực sáng theo từng bậc nâng cấp.
    - Thiết kế giao diện Cửa Hàng **2 Tab chuyên biệt** trong `ShopView.cs`: Tab 1 (Dây chuyền máy tự động G1-G5) và Tab 2 (Trang bị Búa & Lò Nung), đi cùng cơ chế Bạo Kích x5 Quặng kèm hiệu ứng chữ nổ Ruby rực lửa `💥 CRIT!` (`FloatingTextSpawner.cs`).
+6. **Đột phá Kiến trúc Đồ họa 3D Thuần Túy (Pure 3D Procedural Sculpting & Simulation):**
+   - Theo định hướng nâng cấp của hội đồng giảng viên (chuyển đổi từ billboard 2D sang đồ họa 3D thực thụ), Gemini 3.8 đã kiến trúc bộ sinh mô hình procedural 3D độc quyền `Forge3DBuilder.cs` và hệ thống vật liệu URP Lit chuyên sâu:
+     * **Hero 3D Anvil (Đe Rèn Sử Thi):** Điêu khắc với đế gỗ sồi đa giác (`Mat_Wood_Stump`), 2 vòng đai sắt gia cố, chân xòe đúc gang, eo đe thon gọn, sừng đe vuốt nhọn (`Mat_Dark_Iron`), mặt đe thép mài bóng (`Mat_Steel_Polished`) và thỏi phôi quặng thần binh phát quang đỏ rực (`Mat_Hot_Ingot`).
+     * **Hero 3D Furnace (Lò Nung Vòm Đá):** Xây dựng vòm lò đá hoa cương (`Mat_Stone_Furnace`), đai khóa sắt, lòng lò chứa than hồng cháy rực (`Mat_Furnace_Fire`), ống khói vương miện sắt. Point Light được đặt chuẩn xác sâu trong buồng lửa (`x: 1.05, y: 1.25, z: -0.15`), tỏa ánh sáng ấm áp tự nhiên lên bề mặt bàn làm việc và đe rèn.
+     * **Interactive 3D Hammer (`HammerVisual3D.cs`):** Búa rèn 3D lơ lửng với cán gỗ bọc vải, vòng chụp kim loại và đầu búa thép bát giác. Tích hợp thuật toán chuyển động vật lý đàn hồi (*harmonic rebound damping*) và idle breathing, vung giáng xuống đe `CLANG!` mỗi khi nhấp chuột.
+     * **5 Dây chuyền Máy móc 3D (G1..G5):** Thiết kế mô hình cơ khí chuyên biệt (G1: Búa dập tay đòn; G2: Xe goòng 4 bánh và mũi khoan xoắn; G3: Nồi nấu kim loại đồng trên kiềng 3 chân; G4: Bánh đà hơi nước và piston áp lực; G5: Golem thợ rèn Dwarven cầm kìm búa với lõi ngực ma thuật rực sáng).
+     * **Thị sai Camera 3D (`CameraParallax3D.cs`):** Tự động điều chỉnh góc xoay nghiêng và độ lệch của Camera URP theo chuyển động chuột, làm nổi bật chiều sâu không gian 3 chiều và hệ thống đổ bóng mềm (Soft Shadows).
 
 ```csharp
 // Trích đoạn mã nguồn đóng gói chuẩn Unity 6 trong ForgeBuildTools.cs:
