@@ -290,6 +290,7 @@ namespace Forge.EditorTools
             Texture2D texBackdrop = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/Tex_WorkshopBackdrop.png");
 
             Texture2D texOakStump = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Oak_Stump.png");
+            Texture2D texWorkbench = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Workbench_Wood.png");
             Texture2D texDamascus = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Damascus_Steel.png");
             Texture2D texDarkIron = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Hammered_Dark_Iron.png");
             Texture2D texStone = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Stone_Bricks.png");
@@ -298,7 +299,9 @@ namespace Forge.EditorTools
             Texture2D texHotIngot = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Hot_Ingot_Glow.png");
             Texture2D texCrystal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Crystal_Ore.png");
 
-            Material CreateMat(string name, Color color, float metallic = 0f, float smoothness = 0.5f, Color? emission = null, Texture2D mainTex = null, Vector2? tiling = null)
+            Texture2D texLeather = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Forge/Art/Textures/PBR/Tex_Leather_Wrap.png");
+
+            Material CreateMat(string name, Color color, float metallic = 0f, float smoothness = 0.5f, Color? emission = null, Texture2D mainTex = null, Vector2? tiling = null, float envReflections = 1f)
             {
                 string path = $"{MATERIALS_DIR}/Mat_{name}.mat";
                 Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -309,26 +312,44 @@ namespace Forge.EditorTools
                 }
                 mat.shader = shader;
                 mat.color = color;
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
                 if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", metallic);
                 if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
+                if (mat.HasProperty("_EnvironmentReflections")) mat.SetFloat("_EnvironmentReflections", envReflections);
 
                 if (mainTex != null)
                 {
                     mat.mainTexture = mainTex;
-                    if (tiling.HasValue) mat.mainTextureScale = tiling.Value;
+                    if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", mainTex);
+                    if (tiling.HasValue)
+                    {
+                        mat.mainTextureScale = tiling.Value;
+                        if (mat.HasProperty("_BaseMap")) mat.SetTextureScale("_BaseMap", tiling.Value);
+                    }
                 }
 
                 if (emission.HasValue)
                 {
                     mat.EnableKeyword("_EMISSION");
+                    mat.shaderKeywords = new string[] { "_EMISSION" };
                     if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", emission.Value);
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                }
+                else
+                {
+                    mat.DisableKeyword("_EMISSION");
+                    mat.shaderKeywords = new string[0];
+                    if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", Color.black);
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                 }
                 EditorUtility.SetDirty(mat);
                 return mat;
             }
 
-            dict["Desk"] = CreateMat("Desk", new Color(0.68f, 0.48f, 0.32f), 0.02f, 0.12f, null, texWood, new Vector2(3.5f, 1.5f));
-            dict["Floor"] = CreateMat("Floor", new Color(0.38f, 0.30f, 0.24f), 0.05f, 0.15f, null, texWood, new Vector2(6f, 6f));
+            // Warm Golden Honey Oak Master Workbench & Golden Cedar Floor (Matte finish to preserve 100% rich wood colors)
+            dict["Desk"] = CreateMat("Desk", new Color(0.85f, 0.68f, 0.48f), 0.00f, 0.08f, null, texWorkbench ?? texWood, new Vector2(2f, 1f), 0f);
+            dict["Floor"] = CreateMat("Floor", new Color(0.55f, 0.42f, 0.30f), 0.00f, 0.04f, null, texWorkbench ?? texWood, new Vector2(4f, 4f), 0f);
+            dict["Leather"] = CreateMat("Leather", new Color(0.45f, 0.20f, 0.12f), 0.00f, 0.15f, null, texLeather, new Vector2(2f, 2f), 0f);
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Texture") ?? shader;
             string wallPath = $"{MATERIALS_DIR}/Mat_Wall.mat";
@@ -339,22 +360,23 @@ namespace Forge.EditorTools
                 AssetDatabase.CreateAsset(matWall, wallPath);
             }
             matWall.shader = unlitShader;
-            matWall.color = new Color(0.65f, 0.58f, 0.52f);
+            matWall.color = new Color(0.85f, 0.78f, 0.70f);
             if (texBackdrop != null) matWall.mainTexture = texBackdrop;
             EditorUtility.SetDirty(matWall);
             dict["Wall"] = matWall;
 
-            dict["Anvil"] = CreateMat("Anvil", new Color(0.58f, 0.60f, 0.65f), 0.75f, 0.62f, null, texDarkIron ?? texWood, new Vector2(1.5f, 1.5f));
-            dict["FurnaceEmber"] = CreateMat("FurnaceEmber", Color.white, 0.1f, 0.5f, new Color(1.0f, 0.42f, 0.08f) * 3.2f, texEmbers, new Vector2(1.5f, 1.5f));
+            // Vibrant Dwarven PBR Materials (High-contrast metallic & emissive fantasy palette)
+            dict["Anvil"] = CreateMat("Anvil", new Color(0.55f, 0.58f, 0.62f), 0.30f, 0.35f, new Color(0.12f, 0.14f, 0.18f), texDarkIron ?? texWood, new Vector2(1.5f, 1.5f));
+            dict["FurnaceEmber"] = CreateMat("FurnaceEmber", Color.white, 0.05f, 0.6f, new Color(1.0f, 0.45f, 0.08f) * 7.5f, texEmbers, new Vector2(1.5f, 1.5f));
 
-            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.95f, 0.98f, 1.0f), 0.98f, 0.96f, new Color(0.15f, 0.18f, 0.22f), texDamascus, new Vector2(2f, 2f));
-            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.48f, 0.50f, 0.54f), 0.70f, 0.62f, null, texDarkIron, new Vector2(2f, 2f));
-            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.76f, 0.72f, 0.66f), 0.02f, 0.22f, null, texStone, new Vector2(2.5f, 2.5f));
-            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.7f, new Color(1.0f, 0.52f, 0.12f) * 4.5f, texEmbers, new Vector2(1f, 1f));
-            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.20f, 0.70f, new Color(1.0f, 0.55f, 0.15f) * 5.5f, texHotIngot, new Vector2(1f, 1f));
-            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(1.0f, 0.82f, 0.20f), 0.98f, 0.96f, new Color(0.35f, 0.26f, 0.04f), texBronze, new Vector2(1.5f, 1.5f));
-            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", Color.white, 0.20f, 0.96f, new Color(0.25f, 0.95f, 1.0f) * 4.8f, texCrystal, new Vector2(1f, 1f));
-            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.68f, 0.50f, 0.34f), 0.02f, 0.18f, null, texOakStump, new Vector2(1.5f, 1.5f));
+            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.88f, 0.94f, 1.0f), 0.35f, 0.65f, new Color(0.25f, 0.40f, 0.65f) * 0.8f, texDamascus, new Vector2(2f, 2f));
+            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.48f, 0.51f, 0.56f), 0.28f, 0.35f, new Color(0.12f, 0.14f, 0.18f), texDarkIron, new Vector2(2f, 2f));
+            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.72f, 0.74f, 0.76f), 0.00f, 0.05f, null, texStone, new Vector2(2f, 2f), 0f);
+            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.8f, new Color(1.0f, 0.52f, 0.12f) * 8.5f, texEmbers, new Vector2(1f, 1f));
+            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.15f, 0.75f, new Color(1.0f, 0.55f, 0.10f) * 9.5f, texHotIngot, new Vector2(1f, 1f));
+            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(1.0f, 0.85f, 0.15f), 0.40f, 0.65f, new Color(1.0f, 0.75f, 0.15f) * 2.8f, texBronze, new Vector2(1.5f, 1.5f));
+            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", new Color(0.00f, 0.92f, 1.0f), 0.00f, 0.20f, new Color(0.00f, 0.95f, 1.0f) * 4.5f, texCrystal, new Vector2(1f, 1f), 0f);
+            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.70f, 0.48f, 0.30f), 0.00f, 0.08f, null, texOakStump, new Vector2(1.5f, 1.5f), 0f);
 
             // Greybox machine colors
             dict["G1"] = CreateMat("G1", new Color(0.85f, 0.64f, 0.25f), 0.5f, 0.5f);
@@ -481,16 +503,17 @@ namespace Forge.EditorTools
             // 2. [World]
             GameObject goWorld = new GameObject("[World]");
 
-            // 2.1 Lighting & Atmosphere
+            // 2.1 Lighting & Atmosphere (Balanced Fantasy Ambience: Natural stone, rich honey oak, vibrant glowing cyan arcane crystals & fiery forge)
+            RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.92f, 0.84f, 0.72f);
-            RenderSettings.ambientEquatorColor = new Color(0.78f, 0.66f, 0.52f);
-            RenderSettings.ambientGroundColor = new Color(0.50f, 0.38f, 0.28f);
+            RenderSettings.ambientSkyColor = new Color(0.68f, 0.72f, 0.82f) * 0.65f;
+            RenderSettings.ambientEquatorColor = new Color(0.72f, 0.62f, 0.52f) * 0.55f;
+            RenderSettings.ambientGroundColor = new Color(0.32f, 0.25f, 0.20f) * 0.45f;
 
             GameObject goLighting = new GameObject("Lighting");
             goLighting.transform.SetParent(goWorld.transform);
 
-            // Reflection Probe: gives all metallic shaders realistic highlights and reflections
+            // Reflection Probe: Subtle intensity so metallic shaders retain rich gold/steel tint without grey skies
             GameObject goProbe = new GameObject("ReflectionProbe");
             goProbe.transform.SetParent(goLighting.transform);
             goProbe.transform.position = new Vector3(0f, 1.3f, 0f);
@@ -498,113 +521,103 @@ namespace Forge.EditorTools
             probe.mode = ReflectionProbeMode.Realtime;
             probe.refreshMode = ReflectionProbeRefreshMode.OnAwake;
             probe.size = new Vector3(10f, 6f, 10f);
-            probe.intensity = 0.85f;
+            probe.intensity = 0.06f;
 
-            // Sun_Key (Front key light directly illuminating anvil face, desk materials & hearth front)
+            // Sun_Key: High-angled key light illuminating workbench top, anvil face & hearth with warm golden sunlight
             GameObject goSun = new GameObject("Sun_Key");
             goSun.transform.SetParent(goLighting.transform);
-            goSun.transform.position = new Vector3(-1.0f, 3.2f, -3.0f);
-            goSun.transform.rotation = Quaternion.Euler(24f, 10f, 0f);
+            goSun.transform.position = new Vector3(-1.8f, 3.6f, -2.8f);
+            goSun.transform.rotation = Quaternion.Euler(38f, -24f, 0f);
             Light sunLight = goSun.AddComponent<Light>();
             sunLight.type = LightType.Directional;
-            sunLight.color = new Color(1.0f, 0.96f, 0.90f);
-            sunLight.intensity = 1.15f;
+            sunLight.color = new Color(1.0f, 0.96f, 0.88f);
+            sunLight.intensity = 1.05f;
             sunLight.shadows = LightShadows.Soft;
-            sunLight.shadowStrength = 0.40f;
+            sunLight.shadowStrength = 0.45f;
 
-            // Fill_Soft (Front-right warm soft fill light illuminating hearth facade & workbench evenly)
+            // Fill_Soft: Soft cool front-right fill creating painterly fantasy contrast without washing out diffuse color
             GameObject goFill = new GameObject("Fill_Soft");
             goFill.transform.SetParent(goLighting.transform);
-            goFill.transform.position = new Vector3(1.8f, 2.6f, -2.5f);
-            goFill.transform.rotation = Quaternion.Euler(18f, -20f, 0f);
+            goFill.transform.position = new Vector3(2.2f, 2.8f, -2.5f);
+            goFill.transform.rotation = Quaternion.Euler(24f, 32f, 0f);
             Light fillLight = goFill.AddComponent<Light>();
             fillLight.type = LightType.Directional;
-            fillLight.color = new Color(1.0f, 0.88f, 0.75f);
-            fillLight.intensity = 0.75f;
+            fillLight.color = new Color(0.82f, 0.85f, 0.92f);
+            fillLight.intensity = 0.30f;
             fillLight.shadows = LightShadows.None;
 
-            // Rim_Cool (Angled high backlight from rear-right, highlights silhouette WITHOUT camera specular glare)
+            // Rim_Cool: Gentle contour rim separating hero props from background
             GameObject goRim = new GameObject("Rim_Cool");
             goRim.transform.SetParent(goLighting.transform);
             goRim.transform.position = new Vector3(1.5f, 3.2f, 2.6f);
             goRim.transform.rotation = Quaternion.Euler(48f, 135f, 0f);
             Light rimLight = goRim.AddComponent<Light>();
             rimLight.type = LightType.Directional;
-            rimLight.color = new Color(0.60f, 0.75f, 1.0f);
-            rimLight.intensity = 0.30f;
+            rimLight.color = new Color(0.55f, 0.70f, 0.95f);
+            rimLight.intensity = 0.25f;
             rimLight.shadows = LightShadows.None;
 
-            // Dedicated Desk Specular Point Light (Showcases polished gold & Damascus ingots, crystals, and dagger)
+            // Dedicated Desk Specular Point Light: Soft neutral-warm illumination directly spotlighting hero craft materials
             GameObject goDeskLight = new GameObject("Desk_Specular_Point");
             goDeskLight.transform.SetParent(goLighting.transform);
-            goDeskLight.transform.position = new Vector3(-0.05f, 1.35f, -0.30f);
+            goDeskLight.transform.position = new Vector3(0.00f, 1.45f, -0.15f);
             Light deskLight = goDeskLight.AddComponent<Light>();
             deskLight.type = LightType.Point;
-            deskLight.color = new Color(1.0f, 0.96f, 0.90f);
-            deskLight.intensity = 0.50f;
-            deskLight.range = 1.4f;
+            deskLight.color = new Color(1.0f, 0.95f, 0.85f);
+            deskLight.intensity = 0.35f;
+            deskLight.range = 2.4f;
 
-            // Dedicated Hearth Facade Light (Gently washes front carved stone arch, voussoirs & bronze medallion)
-            GameObject goFacadeLight = new GameObject("Hearth_Facade_Light");
-            goFacadeLight.transform.SetParent(goLighting.transform);
-            goFacadeLight.transform.position = new Vector3(1.05f, 1.65f, -1.20f);
-            Light facadeLight = goFacadeLight.AddComponent<Light>();
-            facadeLight.type = LightType.Point;
-            facadeLight.color = new Color(1.0f, 0.88f, 0.68f);
-            facadeLight.intensity = 0.45f;
-            facadeLight.range = 2.5f;
+            // Arcane Crystal Point Light: Brilliant radiant Cyan glow tightly focused on the 5 crystal spires
+            GameObject goCrystalLight = new GameObject("Crystal_Arcane_Point");
+            goCrystalLight.transform.SetParent(goLighting.transform);
+            goCrystalLight.transform.position = new Vector3(-0.21f, 1.15f, 0.00f);
+            Light crystalLight = goCrystalLight.AddComponent<Light>();
+            crystalLight.type = LightType.Point;
+            crystalLight.color = new Color(0.05f, 0.95f, 1.0f);
+            crystalLight.intensity = 1.5f;
+            crystalLight.range = 0.60f;
 
-            // Dedicated Hearth Plinth Light (Illuminates stone plinth foundation, logs and quench tub)
-            GameObject goPlinthLight = new GameObject("Hearth_Plinth_Light");
-            goPlinthLight.transform.SetParent(goLighting.transform);
-            goPlinthLight.transform.position = new Vector3(0.95f, 1.05f, -0.95f);
-            Light plinthLight = goPlinthLight.AddComponent<Light>();
-            plinthLight.type = LightType.Point;
-            plinthLight.color = new Color(1.0f, 0.82f, 0.55f);
-            plinthLight.intensity = 0.38f;
-            plinthLight.range = 2.0f;
+            // Dedicated 24K Gold Bullion Point Light: Rich warm golden radiance illuminating gold ingots & dagger crossguard
+            GameObject goGoldLight = new GameObject("Gold_Bullion_Point");
+            goGoldLight.transform.SetParent(goLighting.transform);
+            goGoldLight.transform.position = new Vector3(0.18f, 1.02f, -0.05f);
+            Light goldLight = goGoldLight.AddComponent<Light>();
+            goldLight.type = LightType.Point;
+            goldLight.color = new Color(1.0f, 0.85f, 0.20f);
+            goldLight.intensity = 1.4f;
+            goldLight.range = 0.70f;
 
-            // Front_Apron_Fill (Gently illuminates front vertical hardwood planks of workbench)
-            GameObject goFrontFill = new GameObject("Front_Apron_Fill");
-            goFrontFill.transform.SetParent(goLighting.transform);
-            goFrontFill.transform.position = new Vector3(0.0f, 0.30f, -2.5f);
-            goFrontFill.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
-            Light frontLight = goFrontFill.AddComponent<Light>();
-            frontLight.type = LightType.Directional;
-            frontLight.color = new Color(0.92f, 0.80f, 0.66f);
-            frontLight.intensity = 0.55f;
-            frontLight.shadows = LightShadows.None;
+            // Hot Billet Micro Glow Point Light: Fiery red-orange magma glow right at the tongs jaws
+            GameObject goHotLight = new GameObject("HotBillet_Point");
+            goHotLight.transform.SetParent(goLighting.transform);
+            goHotLight.transform.position = new Vector3(-0.16f, 0.88f, 0.11f);
+            Light hotLight = goHotLight.AddComponent<Light>();
+            hotLight.type = LightType.Point;
+            hotLight.color = new Color(1.0f, 0.42f, 0.05f);
+            hotLight.intensity = 1.0f;
+            hotLight.range = 0.50f;
 
-            // Furnace_Point: placed deep in the combustion chamber (warm amber glow)
+            // Furnace_Point: placed deep in the combustion chamber (vibrant fiery magma glow contained in hearth)
             GameObject goFurnacePoint = new GameObject("Furnace_Point");
             goFurnacePoint.transform.SetParent(goLighting.transform);
-            goFurnacePoint.transform.position = new Vector3(1.05f, 1.15f, -0.05f);
+            goFurnacePoint.transform.position = new Vector3(1.05f, 1.02f, 0.04f);
             Light furnaceLight = goFurnacePoint.AddComponent<Light>();
             furnaceLight.type = LightType.Point;
-            furnaceLight.color = new Color(1.0f, 0.52f, 0.15f);
-            furnaceLight.intensity = 2.6f;
-            furnaceLight.range = 3.6f;
+            furnaceLight.color = new Color(1.0f, 0.48f, 0.08f);
+            furnaceLight.intensity = 1.6f;
+            furnaceLight.range = 1.15f;
+            furnaceLight.shadows = LightShadows.Soft;
 
             var flicker = goFurnacePoint.AddComponent<Forge.FX.FurnaceFlickerLight>();
             flicker.targetLight = furnaceLight;
-            flicker.minIntensity = 2.0f;
-            flicker.maxIntensity = 3.0f;
-            flicker.flickerSpeed = 3.8f;
-
-            // EmissiveHint_Furnace
-            GameObject goEmissiveHint = new GameObject("EmissiveHint_Furnace");
-            goEmissiveHint.transform.SetParent(goLighting.transform);
-            goEmissiveHint.transform.position = new Vector3(1.05f, 1.15f, -0.10f);
-            Light hintLight = goEmissiveHint.AddComponent<Light>();
-            hintLight.type = LightType.Point;
-            hintLight.color = new Color(1.0f, 0.40f, 0.10f);
-            hintLight.intensity = 0.65f;
-            hintLight.range = 1.2f;
+            flicker.minIntensity = 1.4f;
+            flicker.maxIntensity = 2.1f;
+            flicker.flickerSpeed = 3.5f;
 
             var lightCtrl = goLighting.AddComponent<ForgeLightController>();
             lightCtrl.furnacePointLight = furnaceLight;
-            lightCtrl.defaultBaseIntensity = 2.4f;
-            lightCtrl.upgradedBaseIntensity = 3.2f;
+            lightCtrl.defaultBaseIntensity = 1.8f;
+            lightCtrl.upgradedBaseIntensity = 2.4f;
 
             // 2.2 Environment
             GameObject goEnv = new GameObject("Environment");
@@ -633,15 +646,14 @@ namespace Forge.EditorTools
             if (mats.TryGetValue("Wall", out var mWall)) rendWall.sharedMaterial = mWall;
             rendWall.receiveShadows = false;
 
-            // Desk: pos (0, 0.40, 0) scale (4.73408, 0.80, 1.5) - non-blocking visual
-            GameObject goDesk = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // 3D Master Artisan Workbench (Rich Oak Slab Tabletop, Vertical Apron Planks & Iron Armor Guard)
+            GameObject goDesk = Forge3DBuilder.BuildHeroWorkbench(goEnv.transform, new Vector3(0f, 0.40f, 0f), Quaternion.identity, mats);
             goDesk.name = "Desk";
-            goDesk.transform.SetParent(goEnv.transform);
-            goDesk.transform.position = new Vector3(0f, 0.40f, 0f);
-            goDesk.transform.localScale = new Vector3(4.73408f, 0.80f, 1.5f);
-            var colDesk = goDesk.GetComponent<Collider>();
-            if (colDesk != null) UnityEngine.Object.DestroyImmediate(colDesk);
-            if (mats.TryGetValue("Desk", out var mDesk)) goDesk.GetComponent<Renderer>().sharedMaterial = mDesk;
+
+            // Contact Shadows beneath heavy props (Gently grounds props to table, eliminates floating)
+            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(-0.72f, 0.803f, -0.05f), new Vector2(0.95f, 0.75f), 0.60f);
+            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(1.05f, 0.803f, 0.05f), new Vector2(1.35f, 1.15f), 0.65f);
+            Forge3DBuilder.CreateContactShadow(goEnv.transform, new Vector3(0.00f, 0.803f, -0.06f), new Vector2(0.95f, 0.60f), 0.50f);
 
             // 3D Hero Anvil (Sculpted 3D Oak Stump, Base, Waist, Steel Face, Horn, Heel & Glowing Ingot)
             GameObject goAnvil = Forge3DBuilder.BuildHeroAnvil(goEnv.transform, new Vector3(-0.72f, 0.80f, -0.05f), Quaternion.Euler(0f, 18f, 0f), mats);
@@ -659,7 +671,7 @@ namespace Forge.EditorTools
             GameObject goHammer = Forge3DBuilder.BuildHeroHammer(goEnv.transform, new Vector3(-1.38f, 0.82f, -0.05f), Quaternion.Euler(30f, 22f, -20f), mats);
 
             // 3D Polished Workshop Materials & Tools on workbench (Thỏi thép mài bóng, thỏi vàng, tinh thể quặng phát sáng, dao găm thần binh, kìm rèn)
-            GameObject goDeskProps = Forge3DBuilder.BuildHeroDeskProps(goEnv.transform, new Vector3(-0.05f, 0.80f, -0.10f), Quaternion.Euler(0f, 10f, 0f), mats);
+            GameObject goDeskProps = Forge3DBuilder.BuildHeroDeskProps(goEnv.transform, new Vector3(0.00f, 0.80f, -0.06f), Quaternion.Euler(0f, 4f, 0f), mats);
             goDeskProps.name = "Hero_Desk_Props";
 
             // 3D Hero Furnace (Stone Masonry Hearth, Arched Chamber, Fiery Embers & Chimney Stack)
@@ -906,18 +918,31 @@ namespace Forge.EditorTools
                 AssetDatabase.CreateAsset(profile, volProfilePath);
             }
 
-            if (!profile.TryGet<Bloom>(out var bloom)) bloom = profile.Add<Bloom>();
-            bloom.threshold.Override(0.85f);
-            bloom.intensity.Override(0.70f);
-            bloom.scatter.Override(0.65f);
+            if (!profile.TryGet<Bloom>(out var bloom))
+            {
+                bloom = profile.Add<Bloom>(true);
+                AssetDatabase.AddObjectToAsset(bloom, profile);
+            }
+            bloom.threshold.Override(0.80f);
+            bloom.intensity.Override(1.25f);
+            bloom.scatter.Override(0.70f);
 
-            if (!profile.TryGet<ColorAdjustments>(out var colorAdj)) colorAdj = profile.Add<ColorAdjustments>();
+            if (!profile.TryGet<ColorAdjustments>(out var colorAdj))
+            {
+                colorAdj = profile.Add<ColorAdjustments>(true);
+                AssetDatabase.AddObjectToAsset(colorAdj, profile);
+            }
+            colorAdj.postExposure.Override(0.08f);
             colorAdj.contrast.Override(12f);
             colorAdj.saturation.Override(8f);
 
-            if (!profile.TryGet<Vignette>(out var vignette)) vignette = profile.Add<Vignette>();
-            vignette.intensity.Override(0.24f);
-            vignette.smoothness.Override(0.50f);
+            if (!profile.TryGet<Vignette>(out var vignette))
+            {
+                vignette = profile.Add<Vignette>(true);
+                AssetDatabase.AddObjectToAsset(vignette, profile);
+            }
+            vignette.intensity.Override(0.20f);
+            vignette.smoothness.Override(0.45f);
 
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();

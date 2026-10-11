@@ -17,9 +17,11 @@ namespace Forge.EditorTools
                 AssetDatabase.Refresh();
             }
 
-            Debug.Log("[ForgeTextures] Generating HD Procedural PBR Textures...");
+            Debug.Log("[ForgeTextures] Generating HD Procedural PBR Textures with Rich Fantasy Palette...");
 
+            // Core PBR Textures
             SaveTexture("Tex_Oak_Stump.png", GenerateWoodBarkTexture(512, 512));
+            SaveTexture("Tex_Workbench_Wood.png", GenerateWorkbenchPlanksTexture(512, 512));
             SaveTexture("Tex_Damascus_Steel.png", GenerateDamascusSteelTexture(512, 512));
             SaveTexture("Tex_Hammered_Dark_Iron.png", GenerateHammeredIronTexture(512, 512));
             SaveTexture("Tex_Stone_Bricks.png", GenerateStoneBricksTexture(512, 512));
@@ -29,9 +31,14 @@ namespace Forge.EditorTools
             SaveTexture("Tex_Hot_Ingot_Glow.png", GenerateHotIngotTexture(256, 256));
             SaveTexture("Tex_Crystal_Ore.png", GenerateCrystalTexture(256, 256));
 
+            // Also update legacy Tex_WoodPlanks.png so any fallback surfaces get warm rich oak
+            string legacyWoodPath = "Assets/_Forge/Art/Textures/Tex_WoodPlanks.png";
+            byte[] woodBytes = GenerateWorkbenchPlanksTexture(512, 512).EncodeToPNG();
+            File.WriteAllBytes(legacyWoodPath, woodBytes);
+
             AssetDatabase.Refresh();
             ConfigureImportSettings();
-            Debug.Log("[ForgeTextures] All HD PBR Textures successfully generated!");
+            Debug.Log("[ForgeTextures] All HD PBR Textures successfully generated with vibrant colors!");
         }
 
         private static void SaveTexture(string fileName, Texture2D tex)
@@ -58,18 +65,29 @@ namespace Forge.EditorTools
                     importer.SaveAndReimport();
                 }
             }
+
+            // Also configure legacy wood planks
+            string legacyWoodPath = "Assets/_Forge/Art/Textures/Tex_WoodPlanks.png";
+            TextureImporter legacyImporter = AssetImporter.GetAtPath(legacyWoodPath) as TextureImporter;
+            if (legacyImporter != null)
+            {
+                legacyImporter.wrapMode = TextureWrapMode.Repeat;
+                legacyImporter.filterMode = FilterMode.Bilinear;
+                legacyImporter.anisoLevel = 8;
+                legacyImporter.SaveAndReimport();
+            }
         }
 
         /// <summary>
-        /// Rich, aged oak bark and grain with growth rings and cracks.
+        /// Rich, aged golden-honey oak bark and deep wood fibers with warm amber undertones.
         /// </summary>
         public static Texture2D GenerateWoodBarkTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color darkBrown = new Color(0.24f, 0.16f, 0.10f);
-            Color warmWood = new Color(0.46f, 0.32f, 0.19f);
-            Color lightGrain = new Color(0.58f, 0.42f, 0.26f);
-            Color ironRing = new Color(0.18f, 0.12f, 0.08f);
+            Color darkBrown = new Color(0.42f, 0.26f, 0.14f);
+            Color warmWood = new Color(0.70f, 0.48f, 0.28f);
+            Color lightGrain = new Color(0.86f, 0.64f, 0.38f);
+            Color goldenGrain = new Color(0.96f, 0.74f, 0.46f);
 
             for (int y = 0; y < height; y++)
             {
@@ -79,18 +97,23 @@ namespace Forge.EditorTools
                     float v = (float)y / height;
 
                     // Vertical wood fibers
-                    float fiber = Mathf.PerlinNoise(u * 18f, v * 3.5f);
-                    float micro = Mathf.PerlinNoise(u * 45f, v * 12f) * 0.35f;
-                    float grain = Mathf.Sin((u + fiber * 0.12f) * 60f) * 0.5f + 0.5f;
+                    float fiber = Mathf.PerlinNoise(u * 16f, v * 3.5f);
+                    float micro = Mathf.PerlinNoise(u * 40f, v * 12f) * 0.35f;
+                    float grain = Mathf.Sin((u + fiber * 0.12f) * 55f) * 0.5f + 0.5f;
 
-                    float mix = Mathf.Clamp01(fiber * 0.6f + micro + grain * 0.25f);
+                    float mix = Mathf.Clamp01(fiber * 0.55f + micro + grain * 0.25f);
                     Color baseCol = Color.Lerp(darkBrown, warmWood, mix);
 
-                    // Occasional knot / cracks
-                    float knot = Mathf.PerlinNoise(u * 6f, v * 6f);
-                    if (knot > 0.72f)
+                    if (mix > 0.65f)
                     {
-                        baseCol = Color.Lerp(baseCol, ironRing, (knot - 0.72f) * 3f);
+                        baseCol = Color.Lerp(baseCol, lightGrain, (mix - 0.65f) * 2.5f);
+                    }
+
+                    // Occasional golden warm ring
+                    float knot = Mathf.PerlinNoise(u * 5f, v * 5f);
+                    if (knot > 0.75f)
+                    {
+                        baseCol = Color.Lerp(baseCol, goldenGrain, (knot - 0.75f) * 2.8f);
                     }
 
                     tex.SetPixel(x, y, baseCol);
@@ -101,14 +124,78 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Legendary folded Damascus steel pattern with wave undulations and iridescent sheen.
+        /// Hand-crafted master artisan workbench wooden planks with rich honey wax polish,
+        /// bevelled plank seams, and warm golden highlights.
+        /// </summary>
+        public static Texture2D GenerateWorkbenchPlanksTexture(int width, int height)
+        {
+            Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
+            Color plankDark = new Color(0.40f, 0.24f, 0.12f);
+            Color plankMain = new Color(0.66f, 0.42f, 0.22f);
+            Color plankLight = new Color(0.80f, 0.56f, 0.32f);
+            Color plankHighlight = new Color(0.90f, 0.68f, 0.42f);
+            Color seamShadow = new Color(0.18f, 0.10f, 0.05f);
+
+            int plankCount = 6;
+
+            for (int y = 0; y < height; y++)
+            {
+                float v = (float)y / height;
+                for (int x = 0; x < width; x++)
+                {
+                    float u = (float)x / width;
+                    float plankCoord = u * plankCount;
+                    int plankIdx = Mathf.FloorToInt(plankCoord);
+                    float plankFrac = plankCoord - plankIdx;
+
+                    // Plank seam edge (deep groove shadow)
+                    bool isSeam = (plankFrac < 0.04f || plankFrac > 0.96f);
+
+                    if (isSeam)
+                    {
+                        float seamNoise = Mathf.PerlinNoise(u * 30f, v * 30f) * 0.2f;
+                        tex.SetPixel(x, y, Color.Lerp(seamShadow, plankDark, seamNoise));
+                    }
+                    else
+                    {
+                        // Individual plank variation
+                        float plankSeed = (plankIdx * 17) % 100 * 0.01f;
+                        float woodGrain = Mathf.PerlinNoise(u * 4f + plankSeed, v * 22f);
+                        float fineFiber = Mathf.PerlinNoise(u * 25f, v * 60f) * 0.3f;
+                        float val = Mathf.Clamp01(woodGrain * 0.7f + fineFiber);
+
+                        Color c = Color.Lerp(plankMain, plankLight, val);
+
+                        // Chamfer highlight near seams
+                        if (plankFrac > 0.04f && plankFrac < 0.12f)
+                        {
+                            float chamfer = 1f - ((plankFrac - 0.04f) / 0.08f);
+                            c = Color.Lerp(c, plankHighlight, chamfer * 0.6f);
+                        }
+                        else if (plankFrac < 0.96f && plankFrac > 0.88f)
+                        {
+                            float chamfer = (plankFrac - 0.88f) / 0.08f;
+                            c = Color.Lerp(c, plankDark, chamfer * 0.4f);
+                        }
+
+                        tex.SetPixel(x, y, c);
+                    }
+                }
+            }
+            tex.Apply();
+            return tex;
+        }
+
+        /// <summary>
+        /// Legendary folded Damascus steel pattern with wave undulations and brilliant mirror reflection.
         /// </summary>
         public static Texture2D GenerateDamascusSteelTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color darkSteel = new Color(0.18f, 0.20f, 0.23f);
-            Color lightSteel = new Color(0.78f, 0.82f, 0.88f);
-            Color mediumSteel = new Color(0.45f, 0.48f, 0.54f);
+            Color darkSteel = new Color(0.35f, 0.40f, 0.48f);
+            Color mediumSteel = new Color(0.68f, 0.74f, 0.82f);
+            Color lightSteel = new Color(0.92f, 0.96f, 1.00f);
+            Color mirrorSpecular = new Color(1.00f, 1.00f, 1.00f);
 
             for (int y = 0; y < height; y++)
             {
@@ -118,16 +205,20 @@ namespace Forge.EditorTools
                     float v = (float)y / height;
 
                     // Damascus folding wave equations
-                    float wave1 = Mathf.Sin(u * 35f + Mathf.Cos(v * 20f) * 3f);
-                    float wave2 = Mathf.Cos(v * 28f + Mathf.Sin(u * 15f) * 2.5f);
-                    float noise = Mathf.PerlinNoise(u * 25f, v * 25f) * 0.4f;
+                    float wave1 = Mathf.Sin(u * 32f + Mathf.Cos(v * 18f) * 2.8f);
+                    float wave2 = Mathf.Cos(v * 26f + Mathf.Sin(u * 14f) * 2.2f);
+                    float noise = Mathf.PerlinNoise(u * 22f, v * 22f) * 0.35f;
 
                     float pattern = Mathf.Clamp01((wave1 + wave2) * 0.35f + 0.5f + noise);
 
                     Color c = Color.Lerp(darkSteel, mediumSteel, pattern);
-                    if (pattern > 0.65f)
+                    if (pattern > 0.62f)
                     {
-                        c = Color.Lerp(c, lightSteel, (pattern - 0.65f) * 2.8f);
+                        c = Color.Lerp(c, lightSteel, (pattern - 0.62f) * 2.6f);
+                    }
+                    if (pattern > 0.85f)
+                    {
+                        c = Color.Lerp(c, mirrorSpecular, (pattern - 0.85f) * 5.0f);
                     }
 
                     tex.SetPixel(x, y, c);
@@ -138,14 +229,14 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Hammer-forged dark cast iron with micro pitting, hammer dings, and subtle runic textures.
+        /// Hammer-forged dark cast iron with micro pitting, hammer dings, and metallic gunmetal sheen.
         /// </summary>
         public static Texture2D GenerateHammeredIronTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color ironBase = new Color(0.16f, 0.17f, 0.20f);
-            Color ironHighlight = new Color(0.38f, 0.40f, 0.45f);
-            Color pitShadow = new Color(0.08f, 0.08f, 0.10f);
+            Color ironBase = new Color(0.24f, 0.25f, 0.28f);
+            Color ironHighlight = new Color(0.50f, 0.53f, 0.58f);
+            Color pitShadow = new Color(0.14f, 0.14f, 0.16f);
 
             for (int y = 0; y < height; y++)
             {
@@ -175,15 +266,17 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Ancient hand-carved stone hearth granite masonry with pronounced mortar channels and warm chiselled highlights.
+        /// Warm Dwarven Golden Sandstone & Granite Masonry with warm golden chiselled highlights.
+        /// Banishes all cold grey tones and produces glowing royal hearth masonry!
         /// </summary>
         public static Texture2D GenerateStoneBricksTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color stoneLight = new Color(0.85f, 0.80f, 0.74f);
-            Color stoneDark = new Color(0.64f, 0.58f, 0.52f);
-            Color mortar = new Color(0.32f, 0.28f, 0.25f);
-            Color soot = new Color(0.20f, 0.16f, 0.14f);
+            Color stoneLight = new Color(0.68f, 0.70f, 0.72f);
+            Color stoneDark = new Color(0.36f, 0.38f, 0.40f);
+            Color stoneCool = new Color(0.50f, 0.52f, 0.55f);
+            Color mortar = new Color(0.20f, 0.22f, 0.24f);
+            Color chiselHighlight = new Color(0.80f, 0.82f, 0.85f);
 
             int brickRows = 8;
             int brickCols = 4;
@@ -210,19 +303,22 @@ namespace Forge.EditorTools
                     if (isMortar)
                     {
                         float mNoise = Mathf.PerlinNoise(u * 40f, v * 40f) * 0.3f;
-                        tex.SetPixel(x, y, Color.Lerp(mortar, soot, mNoise));
+                        tex.SetPixel(x, y, Color.Lerp(mortar, stoneDark, mNoise));
                     }
                     else
                     {
                         // Stone variation per brick
                         float brickSeed = (row * 13 + col * 37) % 100 * 0.01f;
-                        float stoneNoise = Mathf.PerlinNoise(u * 20f + brickSeed, v * 20f + brickSeed);
-                        float sootNoise = Mathf.PerlinNoise(u * 5f, v * 5f);
+                        float stoneNoise = Mathf.PerlinNoise(u * 18f + brickSeed, v * 18f + brickSeed);
+                        float fineChisel = Mathf.PerlinNoise(u * 50f, v * 50f) * 0.25f;
 
                         Color brickCol = Color.Lerp(stoneDark, stoneLight, stoneNoise);
-                        if (sootNoise > 0.70f)
+                        brickCol = Color.Lerp(brickCol, stoneCool, fineChisel);
+
+                        // Chiselled cool highlight edge
+                        if (rowFrac > 0.86f || colFrac < 0.12f)
                         {
-                            brickCol = Color.Lerp(brickCol, soot, (sootNoise - 0.70f) * 1.8f);
+                            brickCol = Color.Lerp(brickCol, chiselHighlight, 0.40f);
                         }
 
                         tex.SetPixel(x, y, brickCol);
@@ -234,15 +330,16 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Glowing burning coal embers bed with incandescent cracks and deep ash crust.
+        /// Glowing burning coal embers bed with incandescent magma cracks and golden hot veins.
         /// </summary>
         public static Texture2D GenerateEmbersTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color deepAsh = new Color(0.12f, 0.06f, 0.04f);
-            Color darkCoal = new Color(0.22f, 0.10f, 0.05f);
-            Color glowingOrange = new Color(1.0f, 0.42f, 0.08f);
-            Color blazingYellow = new Color(1.0f, 0.88f, 0.35f);
+            Color deepAsh = new Color(0.28f, 0.12f, 0.06f);
+            Color darkCoal = new Color(0.42f, 0.18f, 0.08f);
+            Color glowingOrange = new Color(1.0f, 0.45f, 0.08f);
+            Color blazingYellow = new Color(1.0f, 0.90f, 0.35f);
+            Color whiteHot = new Color(1.0f, 0.98f, 0.85f);
 
             for (int y = 0; y < height; y++)
             {
@@ -257,19 +354,24 @@ namespace Forge.EditorTools
                     float val = crack1 + crack2;
 
                     // Sharp threshold for incandescent veins
-                    if (val > 0.85f)
+                    if (val > 0.90f)
                     {
-                        float heat = (val - 0.85f) / 0.4f;
+                        float heat = (val - 0.90f) / 0.35f;
+                        tex.SetPixel(x, y, Color.Lerp(blazingYellow, whiteHot, heat));
+                    }
+                    else if (val > 0.75f)
+                    {
+                        float heat = (val - 0.75f) / 0.25f;
                         tex.SetPixel(x, y, Color.Lerp(glowingOrange, blazingYellow, heat));
                     }
-                    else if (val > 0.65f)
+                    else if (val > 0.55f)
                     {
-                        float heat = (val - 0.65f) / 0.20f;
+                        float heat = (val - 0.55f) / 0.20f;
                         tex.SetPixel(x, y, Color.Lerp(darkCoal, glowingOrange, heat));
                     }
                     else
                     {
-                        tex.SetPixel(x, y, Color.Lerp(deepAsh, darkCoal, val / 0.65f));
+                        tex.SetPixel(x, y, Color.Lerp(deepAsh, darkCoal, val / 0.55f));
                     }
                 }
             }
@@ -278,14 +380,15 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Gleaming minted gold bullion and polished brass with brilliant highlights.
+        /// Gleaming minted 24K pure gold bullion and polished royal brass with brilliant specular reflections.
         /// </summary>
         public static Texture2D GenerateBronzeTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color bronzeGold = new Color(0.98f, 0.80f, 0.26f);
-            Color bronzeShadow = new Color(0.55f, 0.38f, 0.12f);
-            Color bronzeHighlight = new Color(1.0f, 0.95f, 0.70f);
+            Color goldDeep = new Color(0.85f, 0.62f, 0.12f);
+            Color goldPure = new Color(1.00f, 0.84f, 0.24f);
+            Color goldHighlight = new Color(1.00f, 0.96f, 0.65f);
+            Color goldSpecular = new Color(1.00f, 1.00f, 0.92f);
 
             for (int y = 0; y < height; y++)
             {
@@ -294,14 +397,18 @@ namespace Forge.EditorTools
                     float u = (float)x / width;
                     float v = (float)y / height;
 
-                    float p1 = Mathf.PerlinNoise(u * 15f, v * 15f);
-                    float p2 = Mathf.PerlinNoise(u * 35f, v * 35f) * 0.3f;
+                    float p1 = Mathf.PerlinNoise(u * 14f, v * 14f);
+                    float p2 = Mathf.PerlinNoise(u * 32f, v * 32f) * 0.3f;
                     float pattern = p1 + p2;
 
-                    Color c = Color.Lerp(bronzeShadow, bronzeGold, pattern);
-                    if (pattern > 0.72f)
+                    Color c = Color.Lerp(goldDeep, goldPure, pattern);
+                    if (pattern > 0.70f)
                     {
-                        c = Color.Lerp(c, bronzeHighlight, (pattern - 0.72f) * 2.8f);
+                        c = Color.Lerp(c, goldHighlight, (pattern - 0.70f) * 2.8f);
+                    }
+                    if (pattern > 0.90f)
+                    {
+                        c = Color.Lerp(c, goldSpecular, (pattern - 0.90f) * 8.0f);
                     }
                     tex.SetPixel(x, y, c);
                 }
@@ -311,14 +418,14 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Stitched criss-cross leather strap grip texture for hammer and tool handles.
+        /// Stitched criss-cross rich burgundy leather strap grip texture for hammer and tool handles.
         /// </summary>
         public static Texture2D GenerateLeatherTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color darkLeather = new Color(0.20f, 0.12f, 0.08f);
-            Color medLeather = new Color(0.38f, 0.24f, 0.15f);
-            Color highlight = new Color(0.50f, 0.35f, 0.22f);
+            Color darkLeather = new Color(0.32f, 0.18f, 0.12f);
+            Color medLeather = new Color(0.52f, 0.32f, 0.20f);
+            Color highlight = new Color(0.68f, 0.46f, 0.30f);
 
             for (int y = 0; y < height; y++)
             {
@@ -352,10 +459,10 @@ namespace Forge.EditorTools
         public static Texture2D GenerateHotIngotTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color whiteHot = new Color(1.0f, 0.98f, 0.85f);
-            Color moltenYellow = new Color(1.0f, 0.75f, 0.18f);
-            Color fieryOrange = new Color(1.0f, 0.35f, 0.05f);
-            Color coolCrust = new Color(0.32f, 0.12f, 0.08f);
+            Color whiteHot = new Color(1.0f, 0.98f, 0.88f);
+            Color moltenYellow = new Color(1.0f, 0.80f, 0.22f);
+            Color fieryOrange = new Color(1.0f, 0.42f, 0.08f);
+            Color coolCrust = new Color(0.48f, 0.18f, 0.10f);
 
             for (int y = 0; y < height; y++)
             {
@@ -384,14 +491,15 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Faceted glowing mystical crystal ore with sharp spectral bands.
+        /// Faceted glowing mystical arcane crystal ore with sharp spectral bands and radiant cyan-emerald brilliance.
         /// </summary>
         public static Texture2D GenerateCrystalTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color cyanDeep = new Color(0.08f, 0.45f, 0.65f);
-            Color cyanBright = new Color(0.20f, 0.88f, 0.95f);
-            Color cyanGlow = new Color(0.70f, 1.0f, 0.98f);
+            Color cyanDeep = new Color(0.02f, 0.55f, 0.78f);
+            Color cyanBright = new Color(0.15f, 0.92f, 1.00f);
+            Color cyanGlow = new Color(0.75f, 1.00f, 1.00f);
+            Color pureWhite = new Color(1.00f, 1.00f, 1.00f);
 
             for (int y = 0; y < height; y++)
             {
@@ -400,14 +508,18 @@ namespace Forge.EditorTools
                     float u = (float)x / width;
                     float v = (float)y / height;
 
-                    float f1 = Mathf.Sin(u * 24f + v * 12f);
-                    float f2 = Mathf.Cos(v * 30f - u * 15f);
+                    float f1 = Mathf.Sin(u * 22f + v * 14f);
+                    float f2 = Mathf.Cos(v * 28f - u * 16f);
                     float facet = Mathf.Abs(f1 + f2) * 0.5f;
 
                     Color c = Color.Lerp(cyanDeep, cyanBright, facet);
-                    if (facet > 0.75f)
+                    if (facet > 0.70f)
                     {
-                        c = Color.Lerp(c, cyanGlow, (facet - 0.75f) * 3f);
+                        c = Color.Lerp(c, cyanGlow, (facet - 0.70f) * 3f);
+                    }
+                    if (facet > 0.90f)
+                    {
+                        c = Color.Lerp(c, pureWhite, (facet - 0.90f) * 8f);
                     }
                     tex.SetPixel(x, y, c);
                 }

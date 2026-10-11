@@ -35,6 +35,107 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
+        /// Builds the Master Artisan 3D Dwarven Workbench:
+        /// Rich beveled oak slab tabletop, vertical timber apron with rhythmic battens,
+        /// front protective iron armor plate with gleaming bronze rivets, and heavy trestle foundation.
+        /// </summary>
+        public static GameObject BuildHeroWorkbench(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
+        {
+            GameObject root = new GameObject("Desk");
+            root.transform.SetParent(parent, false);
+            root.transform.position = worldPos;
+            root.transform.rotation = worldRot;
+
+            Material matWood = mats["Desk"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matBronze = mats["Bronze_Brass"];
+
+#if UNITY_EDITOR
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Workbench_Master.obj");
+            if (modelPrefab != null)
+            {
+                var inst = Object.Instantiate(modelPrefab, root.transform);
+                inst.name = "Workbench_Mesh";
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+
+                var rends = inst.GetComponentsInChildren<Renderer>();
+                foreach (var r in rends)
+                {
+                    string n = r.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("wood") || n.Contains("oak") || n.Contains("plank") || n.Contains("stump")) r.sharedMaterial = matWood;
+                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else if (n.Contains("bronze") || n.Contains("brass") || n.Contains("gold")) r.sharedMaterial = matBronze;
+                    else
+                    {
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 3)
+                            r.sharedMaterials = new Material[] { matWood, matDarkIron, matBronze };
+                        else
+                            r.sharedMaterial = matWood;
+                    }
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    r.receiveShadows = true;
+                }
+                return root;
+            }
+#endif
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Desk_Fallback";
+            cube.transform.SetParent(root.transform, false);
+            cube.transform.localPosition = Vector3.zero;
+            cube.transform.localScale = new Vector3(4.734f, 0.80f, 1.50f);
+            var rend = cube.GetComponent<Renderer>();
+            if (rend != null) rend.sharedMaterial = matWood;
+            var col = cube.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            return root;
+        }
+
+        /// <summary>
+        /// Creates a subtle dark contact shadow decal beneath heavy props (Anvil, Furnace, Materials)
+        /// to firmly ground them on the workbench and eliminate any floating sensation.
+        /// </summary>
+        public static GameObject CreateContactShadow(Transform parent, Vector3 localPos, Vector2 size, float opacity = 0.55f)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            go.name = "Contact_Shadow";
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+            var col = go.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
+            {
+#if UNITY_EDITOR
+                string matPath = "Assets/_Forge/Art/Materials/Mat_Contact_Shadow.mat";
+                Material shadowMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(matPath);
+                if (shadowMat == null)
+                {
+                    Shader unlit = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
+                    shadowMat = new Material(unlit) { name = "Mat_Contact_Shadow" };
+                    shadowMat.color = new Color(0.04f, 0.02f, 0.01f, opacity);
+                    shadowMat.SetFloat("_Surface", 1f); // 1 = Transparent
+                    shadowMat.SetFloat("_Blend", 0f); // 0 = Alpha blend
+                    shadowMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    shadowMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    shadowMat.SetInt("_ZWrite", 0);
+                    shadowMat.renderQueue = 3000;
+                    UnityEditor.AssetDatabase.CreateAsset(shadowMat, matPath);
+                }
+                rend.sharedMaterial = shadowMat;
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                rend.receiveShadows = false;
+#endif
+            }
+            return go;
+        }
+
+        /// <summary>
         /// Builds a Masterpiece 3D Dwarven Blacksmith Anvil:
         /// Giant aged oak stump with 4 heavy root buttresses, double iron bands with 3D rivets,
         /// cast-iron flared anvil base, graceful waist curves, runic side relief,
@@ -488,6 +589,7 @@ namespace Forge.EditorTools
             Material matCrystal = mats["Ore_Crystal"];
             Material matHotIngot = mats["Hot_Ingot"];
             Material matWood = mats["Wood_Stump"];
+            Material matLeather = mats.ContainsKey("Leather") ? mats["Leather"] : matWood;
 
 #if UNITY_EDITOR
             var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Desk_Materials.obj");
@@ -497,7 +599,7 @@ namespace Forge.EditorTools
                 inst.name = "Desk_Materials_Mesh";
                 inst.transform.localPosition = Vector3.zero;
                 inst.transform.localRotation = Quaternion.identity;
-                inst.transform.localScale = Vector3.one;
+                inst.transform.localScale = new Vector3(1.35f, 1.35f, 1.35f);
                 var rends = inst.GetComponentsInChildren<Renderer>();
                 foreach (var r in rends)
                 {
@@ -506,12 +608,12 @@ namespace Forge.EditorTools
                     else if (n.Contains("bronze") || n.Contains("brass") || n.Contains("gold")) r.sharedMaterial = matBronze;
                     else if (n.Contains("crystal") || n.Contains("ore")) r.sharedMaterial = matCrystal;
                     else if (n.Contains("hot") || n.Contains("ingot")) r.sharedMaterial = matHotIngot;
-                    else if (n.Contains("wood") || n.Contains("leather") || n.Contains("stump")) r.sharedMaterial = matWood;
+                    else if (n.Contains("wood") || n.Contains("leather") || n.Contains("stump")) r.sharedMaterial = matLeather;
                     else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
                     else
                     {
                         if (r.sharedMaterials != null && r.sharedMaterials.Length >= 6)
-                            r.sharedMaterials = new Material[] { matSteel, matBronze, matWood, matCrystal, matDarkIron, matHotIngot };
+                            r.sharedMaterials = new Material[] { matSteel, matBronze, matLeather, matCrystal, matDarkIron, matHotIngot };
                         else
                             r.sharedMaterial = matSteel;
                     }
