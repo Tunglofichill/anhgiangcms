@@ -21,6 +21,19 @@ namespace Forge.EditorTools
             }
 
             // Pre-warm particle systems so ambient floating embers and sparks appear mid-air
+            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                string pName = r.transform.parent != null ? r.transform.parent.name : "root";
+                if (pName.Contains("Anvil") || pName.Contains("Furnace") || pName.Contains("Desk") || pName.Contains("Props") || r.name.Contains("Desk"))
+                {
+                    string matsStr = "";
+                    if (r.sharedMaterials != null)
+                    {
+                        foreach (var m in r.sharedMaterials) matsStr += (m != null ? $"{m.name}({m.shader.name}) " : "null ");
+                    }
+                    Debug.Log($"[Diag] {r.gameObject.name} under {pName} has mats: {matsStr}");
+                }
+            }
             var allPs = Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None);
             foreach (var ps in allPs)
             {
@@ -29,7 +42,7 @@ namespace Forge.EditorTools
 
             int width = 1920;
             int height = 1080;
-            RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR);
+            RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
             RenderTexture prevRt = cam.targetTexture;
 
             cam.targetTexture = rt;

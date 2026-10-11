@@ -327,8 +327,8 @@ namespace Forge.EditorTools
                 return mat;
             }
 
-            dict["Desk"] = CreateMat("Desk", new Color(0.48f, 0.38f, 0.30f), 0.02f, 0.16f, null, texWood, new Vector2(4.5f, 2.0f));
-            dict["Floor"] = CreateMat("Floor", new Color(0.28f, 0.24f, 0.20f), 0.05f, 0.15f, null, texWood, new Vector2(6f, 6f));
+            dict["Desk"] = CreateMat("Desk", new Color(0.68f, 0.48f, 0.32f), 0.02f, 0.12f, null, texWood, new Vector2(3.5f, 1.5f));
+            dict["Floor"] = CreateMat("Floor", new Color(0.38f, 0.30f, 0.24f), 0.05f, 0.15f, null, texWood, new Vector2(6f, 6f));
 
             Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Texture") ?? shader;
             string wallPath = $"{MATERIALS_DIR}/Mat_Wall.mat";
@@ -339,22 +339,22 @@ namespace Forge.EditorTools
                 AssetDatabase.CreateAsset(matWall, wallPath);
             }
             matWall.shader = unlitShader;
-            matWall.color = new Color(0.48f, 0.44f, 0.42f);
+            matWall.color = new Color(0.65f, 0.58f, 0.52f);
             if (texBackdrop != null) matWall.mainTexture = texBackdrop;
             EditorUtility.SetDirty(matWall);
             dict["Wall"] = matWall;
 
-            dict["Anvil"] = CreateMat("Anvil", new Color(0.44f, 0.46f, 0.50f), 0.50f, 0.48f, null, texDarkIron ?? texWood, new Vector2(1.5f, 1.5f));
-            dict["FurnaceEmber"] = CreateMat("FurnaceEmber", Color.white, 0.1f, 0.5f, new Color(1.0f, 0.38f, 0.06f) * 2.2f, texEmbers, new Vector2(1.5f, 1.5f));
+            dict["Anvil"] = CreateMat("Anvil", new Color(0.58f, 0.60f, 0.65f), 0.75f, 0.62f, null, texDarkIron ?? texWood, new Vector2(1.5f, 1.5f));
+            dict["FurnaceEmber"] = CreateMat("FurnaceEmber", Color.white, 0.1f, 0.5f, new Color(1.0f, 0.42f, 0.08f) * 3.2f, texEmbers, new Vector2(1.5f, 1.5f));
 
-            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.92f, 0.94f, 0.98f), 0.65f, 0.76f, null, texDamascus, new Vector2(2f, 2f));
-            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.44f, 0.46f, 0.50f), 0.48f, 0.50f, null, texDarkIron, new Vector2(2f, 2f));
-            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.68f, 0.64f, 0.60f), 0.02f, 0.20f, null, texStone, new Vector2(2.5f, 2.5f));
-            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.7f, new Color(1.0f, 0.48f, 0.10f) * 3.5f, texEmbers, new Vector2(1f, 1f));
-            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.25f, 0.60f, new Color(1.0f, 0.55f, 0.12f) * 4.5f, texHotIngot, new Vector2(1f, 1f));
-            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(0.88f, 0.68f, 0.32f), 0.75f, 0.60f, null, texBronze, new Vector2(1.5f, 1.5f));
-            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", Color.white, 0.45f, 0.88f, new Color(0.20f, 0.85f, 0.90f) * 2.2f, texCrystal, new Vector2(1f, 1f));
-            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.55f, 0.42f, 0.30f), 0.02f, 0.22f, null, texOakStump, new Vector2(1.5f, 1.5f));
+            dict["Steel_Polished"] = CreateMat("Steel_Polished", new Color(0.95f, 0.98f, 1.0f), 0.98f, 0.96f, new Color(0.15f, 0.18f, 0.22f), texDamascus, new Vector2(2f, 2f));
+            dict["Dark_Iron"] = CreateMat("Dark_Iron", new Color(0.48f, 0.50f, 0.54f), 0.70f, 0.62f, null, texDarkIron, new Vector2(2f, 2f));
+            dict["Stone_Furnace"] = CreateMat("Stone_Furnace", new Color(0.76f, 0.72f, 0.66f), 0.02f, 0.22f, null, texStone, new Vector2(2.5f, 2.5f));
+            dict["Furnace_Fire"] = CreateMat("Furnace_Fire", Color.white, 0.05f, 0.7f, new Color(1.0f, 0.52f, 0.12f) * 4.5f, texEmbers, new Vector2(1f, 1f));
+            dict["Hot_Ingot"] = CreateMat("Hot_Ingot", Color.white, 0.20f, 0.70f, new Color(1.0f, 0.55f, 0.15f) * 5.5f, texHotIngot, new Vector2(1f, 1f));
+            dict["Bronze_Brass"] = CreateMat("Bronze_Brass", new Color(1.0f, 0.82f, 0.20f), 0.98f, 0.96f, new Color(0.35f, 0.26f, 0.04f), texBronze, new Vector2(1.5f, 1.5f));
+            dict["Ore_Crystal"] = CreateMat("Ore_Crystal", Color.white, 0.20f, 0.96f, new Color(0.25f, 0.95f, 1.0f) * 4.8f, texCrystal, new Vector2(1f, 1f));
+            dict["Wood_Stump"] = CreateMat("Wood_Stump", new Color(0.68f, 0.50f, 0.34f), 0.02f, 0.18f, null, texOakStump, new Vector2(1.5f, 1.5f));
 
             // Greybox machine colors
             dict["G1"] = CreateMat("G1", new Color(0.85f, 0.64f, 0.25f), 0.5f, 0.5f);
@@ -483,9 +483,9 @@ namespace Forge.EditorTools
 
             // 2.1 Lighting & Atmosphere
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.40f, 0.44f, 0.52f);
-            RenderSettings.ambientEquatorColor = new Color(0.32f, 0.28f, 0.24f);
-            RenderSettings.ambientGroundColor = new Color(0.20f, 0.16f, 0.14f);
+            RenderSettings.ambientSkyColor = new Color(0.92f, 0.84f, 0.72f);
+            RenderSettings.ambientEquatorColor = new Color(0.78f, 0.66f, 0.52f);
+            RenderSettings.ambientGroundColor = new Color(0.50f, 0.38f, 0.28f);
 
             GameObject goLighting = new GameObject("Lighting");
             goLighting.transform.SetParent(goWorld.transform);
@@ -493,67 +493,108 @@ namespace Forge.EditorTools
             // Reflection Probe: gives all metallic shaders realistic highlights and reflections
             GameObject goProbe = new GameObject("ReflectionProbe");
             goProbe.transform.SetParent(goLighting.transform);
-            goProbe.transform.position = new Vector3(0f, 1.2f, 0f);
+            goProbe.transform.position = new Vector3(0f, 1.3f, 0f);
             var probe = goProbe.AddComponent<ReflectionProbe>();
             probe.mode = ReflectionProbeMode.Realtime;
             probe.refreshMode = ReflectionProbeRefreshMode.OnAwake;
             probe.size = new Vector3(10f, 6f, 10f);
             probe.intensity = 0.85f;
 
-            // Sun_Key
+            // Sun_Key (Front key light directly illuminating anvil face, desk materials & hearth front)
             GameObject goSun = new GameObject("Sun_Key");
             goSun.transform.SetParent(goLighting.transform);
-            goSun.transform.position = new Vector3(2.0f, 3.5f, -2.5f);
-            goSun.transform.rotation = Quaternion.Euler(42f, -25f, 0f);
+            goSun.transform.position = new Vector3(-1.0f, 3.2f, -3.0f);
+            goSun.transform.rotation = Quaternion.Euler(24f, 10f, 0f);
             Light sunLight = goSun.AddComponent<Light>();
             sunLight.type = LightType.Directional;
-            sunLight.color = new Color(1.0f, 0.97f, 0.92f);
+            sunLight.color = new Color(1.0f, 0.96f, 0.90f);
             sunLight.intensity = 1.15f;
             sunLight.shadows = LightShadows.Soft;
-            sunLight.shadowStrength = 0.70f;
+            sunLight.shadowStrength = 0.40f;
 
-            // Fill_Soft (Cool moody shadows)
+            // Fill_Soft (Front-right warm soft fill light illuminating hearth facade & workbench evenly)
             GameObject goFill = new GameObject("Fill_Soft");
             goFill.transform.SetParent(goLighting.transform);
-            goFill.transform.position = new Vector3(-2.5f, 2.5f, -2.5f);
-            goFill.transform.rotation = Quaternion.Euler(30f, 35f, 0f);
+            goFill.transform.position = new Vector3(1.8f, 2.6f, -2.5f);
+            goFill.transform.rotation = Quaternion.Euler(18f, -20f, 0f);
             Light fillLight = goFill.AddComponent<Light>();
             fillLight.type = LightType.Directional;
-            fillLight.color = new Color(0.68f, 0.74f, 0.88f);
+            fillLight.color = new Color(1.0f, 0.88f, 0.75f);
             fillLight.intensity = 0.75f;
             fillLight.shadows = LightShadows.None;
 
-            // Rim_Cool (Sharp blue rim backlight)
+            // Rim_Cool (Angled high backlight from rear-right, highlights silhouette WITHOUT camera specular glare)
             GameObject goRim = new GameObject("Rim_Cool");
             goRim.transform.SetParent(goLighting.transform);
-            goRim.transform.position = new Vector3(0.2f, 2.8f, 2.6f);
-            goRim.transform.rotation = Quaternion.Euler(15f, 180f, 0f);
+            goRim.transform.position = new Vector3(1.5f, 3.2f, 2.6f);
+            goRim.transform.rotation = Quaternion.Euler(48f, 135f, 0f);
             Light rimLight = goRim.AddComponent<Light>();
             rimLight.type = LightType.Directional;
-            rimLight.color = new Color(0.45f, 0.65f, 0.90f);
-            rimLight.intensity = 0.40f;
+            rimLight.color = new Color(0.60f, 0.75f, 1.0f);
+            rimLight.intensity = 0.30f;
             rimLight.shadows = LightShadows.None;
+
+            // Dedicated Desk Specular Point Light (Showcases polished gold & Damascus ingots, crystals, and dagger)
+            GameObject goDeskLight = new GameObject("Desk_Specular_Point");
+            goDeskLight.transform.SetParent(goLighting.transform);
+            goDeskLight.transform.position = new Vector3(-0.05f, 1.35f, -0.30f);
+            Light deskLight = goDeskLight.AddComponent<Light>();
+            deskLight.type = LightType.Point;
+            deskLight.color = new Color(1.0f, 0.96f, 0.90f);
+            deskLight.intensity = 0.50f;
+            deskLight.range = 1.4f;
+
+            // Dedicated Hearth Facade Light (Gently washes front carved stone arch, voussoirs & bronze medallion)
+            GameObject goFacadeLight = new GameObject("Hearth_Facade_Light");
+            goFacadeLight.transform.SetParent(goLighting.transform);
+            goFacadeLight.transform.position = new Vector3(1.05f, 1.65f, -1.20f);
+            Light facadeLight = goFacadeLight.AddComponent<Light>();
+            facadeLight.type = LightType.Point;
+            facadeLight.color = new Color(1.0f, 0.88f, 0.68f);
+            facadeLight.intensity = 0.45f;
+            facadeLight.range = 2.5f;
+
+            // Dedicated Hearth Plinth Light (Illuminates stone plinth foundation, logs and quench tub)
+            GameObject goPlinthLight = new GameObject("Hearth_Plinth_Light");
+            goPlinthLight.transform.SetParent(goLighting.transform);
+            goPlinthLight.transform.position = new Vector3(0.95f, 1.05f, -0.95f);
+            Light plinthLight = goPlinthLight.AddComponent<Light>();
+            plinthLight.type = LightType.Point;
+            plinthLight.color = new Color(1.0f, 0.82f, 0.55f);
+            plinthLight.intensity = 0.38f;
+            plinthLight.range = 2.0f;
+
+            // Front_Apron_Fill (Gently illuminates front vertical hardwood planks of workbench)
+            GameObject goFrontFill = new GameObject("Front_Apron_Fill");
+            goFrontFill.transform.SetParent(goLighting.transform);
+            goFrontFill.transform.position = new Vector3(0.0f, 0.30f, -2.5f);
+            goFrontFill.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
+            Light frontLight = goFrontFill.AddComponent<Light>();
+            frontLight.type = LightType.Directional;
+            frontLight.color = new Color(0.92f, 0.80f, 0.66f);
+            frontLight.intensity = 0.55f;
+            frontLight.shadows = LightShadows.None;
 
             // Furnace_Point: placed deep in the combustion chamber (warm amber glow)
             GameObject goFurnacePoint = new GameObject("Furnace_Point");
             goFurnacePoint.transform.SetParent(goLighting.transform);
-            goFurnacePoint.transform.position = new Vector3(1.05f, 1.35f, -0.05f);
+            goFurnacePoint.transform.position = new Vector3(1.05f, 1.15f, -0.05f);
             Light furnaceLight = goFurnacePoint.AddComponent<Light>();
             furnaceLight.type = LightType.Point;
             furnaceLight.color = new Color(1.0f, 0.52f, 0.15f);
-            furnaceLight.intensity = 2.4f;
+            furnaceLight.intensity = 2.6f;
             furnaceLight.range = 3.6f;
 
             var flicker = goFurnacePoint.AddComponent<Forge.FX.FurnaceFlickerLight>();
             flicker.targetLight = furnaceLight;
-            flicker.minIntensity = 1.8f;
-            flicker.maxIntensity = 2.8f;
+            flicker.minIntensity = 2.0f;
+            flicker.maxIntensity = 3.0f;
             flicker.flickerSpeed = 3.8f;
 
             // EmissiveHint_Furnace
             GameObject goEmissiveHint = new GameObject("EmissiveHint_Furnace");
             goEmissiveHint.transform.SetParent(goLighting.transform);
-            goEmissiveHint.transform.position = new Vector3(1.05f, 1.35f, -0.10f);
+            goEmissiveHint.transform.position = new Vector3(1.05f, 1.15f, -0.10f);
             Light hintLight = goEmissiveHint.AddComponent<Light>();
             hintLight.type = LightType.Point;
             hintLight.color = new Color(1.0f, 0.40f, 0.10f);
@@ -616,6 +657,10 @@ namespace Forge.EditorTools
 
             // 3D Interactive Smith Hammer (Búa Rèn 3D vung đập khi click)
             GameObject goHammer = Forge3DBuilder.BuildHeroHammer(goEnv.transform, new Vector3(-1.38f, 0.82f, -0.05f), Quaternion.Euler(30f, 22f, -20f), mats);
+
+            // 3D Polished Workshop Materials & Tools on workbench (Thỏi thép mài bóng, thỏi vàng, tinh thể quặng phát sáng, dao găm thần binh, kìm rèn)
+            GameObject goDeskProps = Forge3DBuilder.BuildHeroDeskProps(goEnv.transform, new Vector3(-0.05f, 0.80f, -0.10f), Quaternion.Euler(0f, 10f, 0f), mats);
+            goDeskProps.name = "Hero_Desk_Props";
 
             // 3D Hero Furnace (Stone Masonry Hearth, Arched Chamber, Fiery Embers & Chimney Stack)
             GameObject goFurnace = Forge3DBuilder.BuildHeroFurnace(goEnv.transform, new Vector3(1.05f, 0.80f, 0.05f), Quaternion.Euler(0f, -24f, 0f), mats);
@@ -830,8 +875,8 @@ namespace Forge.EditorTools
             GameObject goCam = new GameObject("Main Camera");
             goCam.tag = "MainCamera";
             goCam.transform.SetParent(goCameraRig.transform);
-            goCam.transform.position = new Vector3(0.00f, 2.35f, -3.20f);
-            goCam.transform.rotation = Quaternion.Euler(22f, 0f, 0f);
+            goCam.transform.position = new Vector3(0.00f, 2.22f, -3.70f);
+            goCam.transform.rotation = Quaternion.Euler(16.5f, 0f, 0f);
             var cam = goCam.AddComponent<Camera>();
             cam.fieldOfView = 38f;
             cam.nearClipPlane = 0.05f;

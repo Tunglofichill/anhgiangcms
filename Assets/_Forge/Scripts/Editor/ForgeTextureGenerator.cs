@@ -175,15 +175,15 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Ancient hand-carved stone hearth bricks with mortar channels and soot discoloration.
+        /// Ancient hand-carved stone hearth granite masonry with pronounced mortar channels and warm chiselled highlights.
         /// </summary>
         public static Texture2D GenerateStoneBricksTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color stoneLight = new Color(0.52f, 0.46f, 0.40f);
-            Color stoneDark = new Color(0.32f, 0.28f, 0.24f);
-            Color mortar = new Color(0.18f, 0.16f, 0.15f);
-            Color soot = new Color(0.12f, 0.10f, 0.09f);
+            Color stoneLight = new Color(0.85f, 0.80f, 0.74f);
+            Color stoneDark = new Color(0.64f, 0.58f, 0.52f);
+            Color mortar = new Color(0.32f, 0.28f, 0.25f);
+            Color soot = new Color(0.20f, 0.16f, 0.14f);
 
             int brickRows = 8;
             int brickCols = 4;
@@ -205,7 +205,7 @@ namespace Forge.EditorTools
                     float colFrac = (shiftedU * brickCols) - col;
 
                     // Mortar seams
-                    bool isMortar = (rowFrac < 0.08f || rowFrac > 0.92f || colFrac < 0.06f || colFrac > 0.94f);
+                    bool isMortar = (rowFrac < 0.07f || rowFrac > 0.93f || colFrac < 0.05f || colFrac > 0.95f);
 
                     if (isMortar)
                     {
@@ -220,9 +220,9 @@ namespace Forge.EditorTools
                         float sootNoise = Mathf.PerlinNoise(u * 5f, v * 5f);
 
                         Color brickCol = Color.Lerp(stoneDark, stoneLight, stoneNoise);
-                        if (sootNoise > 0.60f)
+                        if (sootNoise > 0.70f)
                         {
-                            brickCol = Color.Lerp(brickCol, soot, (sootNoise - 0.60f) * 1.5f);
+                            brickCol = Color.Lerp(brickCol, soot, (sootNoise - 0.70f) * 1.8f);
                         }
 
                         tex.SetPixel(x, y, brickCol);
@@ -278,14 +278,14 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Antique polished brass with hammered reflections and aged patina edges.
+        /// Gleaming minted gold bullion and polished brass with brilliant highlights.
         /// </summary>
         public static Texture2D GenerateBronzeTexture(int width, int height)
         {
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, true);
-            Color bronzeGold = new Color(0.88f, 0.68f, 0.32f);
-            Color bronzeShadow = new Color(0.48f, 0.32f, 0.14f);
-            Color bronzeHighlight = new Color(1.0f, 0.88f, 0.55f);
+            Color bronzeGold = new Color(0.98f, 0.80f, 0.26f);
+            Color bronzeShadow = new Color(0.55f, 0.38f, 0.12f);
+            Color bronzeHighlight = new Color(1.0f, 0.95f, 0.70f);
 
             for (int y = 0; y < height; y++)
             {
@@ -299,9 +299,9 @@ namespace Forge.EditorTools
                     float pattern = p1 + p2;
 
                     Color c = Color.Lerp(bronzeShadow, bronzeGold, pattern);
-                    if (pattern > 0.75f)
+                    if (pattern > 0.72f)
                     {
-                        c = Color.Lerp(c, bronzeHighlight, (pattern - 0.75f) * 2.5f);
+                        c = Color.Lerp(c, bronzeHighlight, (pattern - 0.72f) * 2.8f);
                     }
                     tex.SetPixel(x, y, c);
                 }

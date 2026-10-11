@@ -74,6 +74,86 @@ namespace Forge.EditorTools
                 AddQuad(c4, c0, c1, c5, uv0, uv3, uv2, uv1); // Bottom (-Y)
             }
 
+            public void AddBoxOriented(Vector3 center, Vector3 size, Quaternion rot)
+            {
+                Vector3 h = size * 0.5f;
+                Vector3 c0 = center + rot * new Vector3(-h.x, -h.y, -h.z);
+                Vector3 c1 = center + rot * new Vector3(h.x, -h.y, -h.z);
+                Vector3 c2 = center + rot * new Vector3(h.x, h.y, -h.z);
+                Vector3 c3 = center + rot * new Vector3(-h.x, h.y, -h.z);
+                Vector3 c4 = center + rot * new Vector3(-h.x, -h.y, h.z);
+                Vector3 c5 = center + rot * new Vector3(h.x, -h.y, h.z);
+                Vector3 c6 = center + rot * new Vector3(h.x, h.y, h.z);
+                Vector3 c7 = center + rot * new Vector3(-h.x, h.y, h.z);
+
+                Vector2 uv0 = new Vector2(0, 0); Vector2 uv1 = new Vector2(1, 0);
+                Vector2 uv2 = new Vector2(1, 1); Vector2 uv3 = new Vector2(0, 1);
+
+                AddQuad(c0, c3, c2, c1, uv0, uv3, uv2, uv1); // Front (-Z)
+                AddQuad(c5, c6, c7, c4, uv0, uv3, uv2, uv1); // Back (+Z)
+                AddQuad(c4, c7, c3, c0, uv0, uv3, uv2, uv1); // Left (-X)
+                AddQuad(c1, c2, c6, c5, uv0, uv3, uv2, uv1); // Right (+X)
+                AddQuad(c3, c7, c6, c2, uv0, uv3, uv2, uv1); // Top (+Y)
+                AddQuad(c4, c0, c1, c5, uv0, uv3, uv2, uv1); // Bottom (-Y)
+            }
+
+            public void AddTrapezoidPrism(Vector3 center, Vector3 bottomSize, Vector3 topSize, Quaternion rot)
+            {
+                Vector3 hb = bottomSize * 0.5f;
+                Vector3 ht = topSize * 0.5f;
+                float halfH = bottomSize.y * 0.5f;
+
+                Vector3 c0 = center + rot * new Vector3(-hb.x, -halfH, -hb.z);
+                Vector3 c1 = center + rot * new Vector3(hb.x, -halfH, -hb.z);
+                Vector3 c2 = center + rot * new Vector3(ht.x, halfH, -ht.z);
+                Vector3 c3 = center + rot * new Vector3(-ht.x, halfH, -ht.z);
+
+                Vector3 c4 = center + rot * new Vector3(-hb.x, -halfH, hb.z);
+                Vector3 c5 = center + rot * new Vector3(hb.x, -halfH, hb.z);
+                Vector3 c6 = center + rot * new Vector3(ht.x, halfH, ht.z);
+                Vector3 c7 = center + rot * new Vector3(-ht.x, halfH, ht.z);
+
+                Vector2 uv0 = new Vector2(0, 0); Vector2 uv1 = new Vector2(1, 0);
+                Vector2 uv2 = new Vector2(1, 1); Vector2 uv3 = new Vector2(0, 1);
+
+                AddQuad(c0, c3, c2, c1, uv0, uv3, uv2, uv1); // Front
+                AddQuad(c5, c6, c7, c4, uv0, uv3, uv2, uv1); // Back
+                AddQuad(c4, c7, c3, c0, uv0, uv3, uv2, uv1); // Left
+                AddQuad(c1, c2, c6, c5, uv0, uv3, uv2, uv1); // Right
+                AddQuad(c3, c7, c6, c2, uv0, uv3, uv2, uv1); // Top
+                AddQuad(c4, c0, c1, c5, uv0, uv3, uv2, uv1); // Bottom
+            }
+
+            public void AddCrystalSpire(Vector3 baseCenter, Vector3 tipPos, float radius, int segments = 6)
+            {
+                Vector3 dir = (tipPos - baseCenter);
+                float len = dir.magnitude;
+                if (len < 0.001f) return;
+                dir /= len;
+
+                Vector3 u = Mathf.Abs(dir.y) < 0.9f ? Vector3.Cross(dir, Vector3.up).normalized : Vector3.Cross(dir, Vector3.right).normalized;
+                Vector3 v = Vector3.Cross(dir, u).normalized;
+
+                Vector3 midCenter = baseCenter + dir * (len * 0.70f);
+                float angStep = Mathf.PI * 2f / segments;
+
+                Vector3[] midVerts = new Vector3[segments];
+                for (int i = 0; i < segments; i++)
+                {
+                    float a = i * angStep;
+                    midVerts[i] = midCenter + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * radius;
+                }
+
+                for (int i = 0; i < segments; i++)
+                {
+                    int next = (i + 1) % segments;
+                    // Lower facet
+                    AddTriangle(baseCenter, midVerts[next], midVerts[i], new Vector2(0.5f, 0f), new Vector2(1f, 0.7f), new Vector2(0f, 0.7f));
+                    // Upper facet
+                    AddTriangle(midVerts[i], midVerts[next], tipPos, new Vector2(0f, 0.7f), new Vector2(1f, 0.7f), new Vector2(0.5f, 1f));
+                }
+            }
+
             public void AddCylinder(Vector3 bottomCenter, float radiusBottom, float radiusTop, float height, int segments = 16)
             {
                 float angStep = Mathf.PI * 2f / segments;
@@ -212,6 +292,9 @@ namespace Forge.EditorTools
             string hammerObj = BuildHammerObj();
             File.WriteAllText(Path.Combine(MODELS_DIR, "Hammer_Dwarven.obj"), hammerObj);
 
+            string deskMaterialsObj = BuildDeskMaterialsObj();
+            File.WriteAllText(Path.Combine(MODELS_DIR, "Desk_Materials.obj"), deskMaterialsObj);
+
             AssetDatabase.Refresh();
             ConfigureModelImports();
             Debug.Log("[ForgeModels] All 3D OBJ Models successfully created and imported!");
@@ -231,6 +314,7 @@ namespace Forge.EditorTools
                     importer.importBlendShapes = false;
                     importer.importAnimation = false;
                     importer.materialImportMode = ModelImporterMaterialImportMode.None;
+                    importer.preserveHierarchy = true;
                     importer.SaveAndReimport();
                 }
             }
@@ -304,11 +388,12 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Sculpted Dwarven Stone Hearth Furnace with 4 submesh groups:
-        /// 1. Stone_Furnace: Arched stone hearth, pillars, lintel, chimney flue
-        /// 2. Dark_Iron: Pyramid smokehood, iron sill, chimney crown and straps
-        /// 3. Furnace_Fire: Internal multi-tiered burning coal embers bed
-        /// 4. Wood_Stump: Bellows frame, quench bucket, and firewood
+        /// Sculpted Dwarven Stone Hearth Furnace with 5 submesh groups:
+        /// 1. Stone_Furnace: Stepped plinth, fluted pillars, 7-voussoir curved stone arch, spandrels, cornice, chimney shaft
+        /// 2. Dark_Iron: Cast-iron floor grate, keystone, tiered hammered smoke hood, chimney bands & crown
+        /// 3. Bronze_Brass: Ornate keystone medallion, hood rivet band studs, pillar brackets
+        /// 4. Furnace_Fire: Deep combustion glowing coal bed, burning split logs, rising flame tongues
+        /// 5. Wood_Stump: Side bellows with leather pleats, quench bucket with tongs, firewood pile
         /// </summary>
         public static string BuildFurnaceObj()
         {
@@ -319,67 +404,251 @@ namespace Forge.EditorTools
             // ==========================================
             b.SetGroup("Stone_Furnace");
 
-            // Stepped Masonry Plinth Base (1.10 x 0.22 x 1.10)
-            b.AddBox(new Vector3(0, 0.11f, 0), new Vector3(1.10f, 0.22f, 1.10f));
+            // Stepped Masonry Plinth Base Foundation (Bệ móng đá hoa cương 2 bậc vững chắc)
+            b.AddBox(new Vector3(0, 0.05f, 0), new Vector3(1.26f, 0.10f, 0.92f));
+            b.AddBox(new Vector3(0, 0.14f, -0.02f), new Vector3(1.16f, 0.08f, 0.86f));
 
-            // Left Stone Pillar Jamb
-            b.AddBox(new Vector3(-0.36f, 0.58f, -0.10f), new Vector3(0.24f, 0.72f, 0.65f));
+            // Left Stone Pillar Jamb (Cột đá trái)
+            b.AddBox(new Vector3(-0.38f, 0.50f, 0.00f), new Vector3(0.24f, 0.64f, 0.66f));
+            // Left Pillar Impost Capital (Phào chỉ đầu cột trái)
+            b.AddBox(new Vector3(-0.38f, 0.84f, -0.02f), new Vector3(0.28f, 0.06f, 0.66f));
 
-            // Right Stone Pillar Jamb
-            b.AddBox(new Vector3(0.36f, 0.58f, -0.10f), new Vector3(0.24f, 0.72f, 0.65f));
+            // Right Stone Pillar Jamb (Cột đá phải)
+            b.AddBox(new Vector3(0.38f, 0.50f, 0.00f), new Vector3(0.24f, 0.64f, 0.66f));
+            // Right Pillar Impost Capital (Phào chỉ đầu cột phải)
+            b.AddBox(new Vector3(0.38f, 0.84f, -0.02f), new Vector3(0.28f, 0.06f, 0.66f));
 
-            // Back Masonry Wall
-            b.AddBox(new Vector3(0, 0.58f, 0.25f), new Vector3(0.85f, 0.72f, 0.25f));
+            // Back Masonry Wall (Tường đá sau)
+            b.AddBox(new Vector3(0, 0.58f, 0.24f), new Vector3(0.96f, 0.80f, 0.22f));
 
-            // Curved Stone Arch Header
-            b.AddBox(new Vector3(0, 0.88f, -0.22f), new Vector3(0.70f, 0.14f, 0.24f));
+            // TRUE SEGMENTED RADIATING VOUSSOIR STONE ARCH (Vòm đá cuốn 7 khối voussoir nhô ra mặt tiền)
+            // Arch Center: (0, 0.84, -0.28), Radius = 0.27
+            float[] archAngles = new float[] { 15f, 38f, 62f, 118f, 142f, 165f }; // 90° is keystone
+            float archRadius = 0.27f;
+            Vector3 archCenter = new Vector3(0, 0.84f, -0.28f);
+            foreach (float angDeg in archAngles)
+            {
+                float angRad = angDeg * Mathf.Deg2Rad;
+                Vector3 vPos = archCenter + new Vector3(Mathf.Cos(angRad) * archRadius, Mathf.Sin(angRad) * archRadius, 0);
+                Quaternion vRot = Quaternion.Euler(0, 0, angDeg - 90f);
+                b.AddBoxOriented(vPos, new Vector3(0.12f, 0.14f, 0.24f), vRot);
+            }
 
-            // Chimney Flue Shaft
-            b.AddCylinder(new Vector3(0, 1.40f, 0.05f), 0.28f, 0.26f, 0.65f, 16);
+            // Front Spandrel Masonry Wall (Vách đá tam giác ôm vòm cuốn)
+            b.AddBox(new Vector3(-0.28f, 1.02f, -0.16f), new Vector3(0.24f, 0.30f, 0.36f));
+            b.AddBox(new Vector3(0.28f, 1.02f, -0.16f), new Vector3(0.24f, 0.30f, 0.36f));
+
+            // Heavy Masonry Cornice Mantel Shelf (Gờ mái đá hoa cương nằm ngang nâng nón khói)
+            b.AddBox(new Vector3(0, 1.18f, -0.10f), new Vector3(0.92f, 0.08f, 0.48f));
+
+            // Chimney Flue Shaft Stone Core
+            b.AddCylinder(new Vector3(0, 1.48f, 0.00f), 0.22f, 0.21f, 0.16f, 16);
 
             // ==========================================
-            // GROUP 2: Dark_Iron (Nón Hút Sắt Đen & Vành Vương Miện)
+            // GROUP 2: Dark_Iron (Phụ Kiện Sắt Đen, Vỉ Lò, Nón Hút Khói, Vương Miện)
             // ==========================================
             b.SetGroup("Dark_Iron");
 
-            // Hearth Iron Sill Plate
-            b.AddBox(new Vector3(0, 0.24f, -0.38f), new Vector3(0.88f, 0.06f, 0.26f));
+            // Hearth Apron Sill Plate & Retaining Fender (Mặt ngưỡng sắt chân lò)
+            b.AddBox(new Vector3(0, 0.20f, -0.34f), new Vector3(0.86f, 0.05f, 0.20f));
+            b.AddBox(new Vector3(0, 0.25f, -0.26f), new Vector3(0.56f, 0.045f, 0.04f));
 
-            // Tapered Iron Smoke Hood (0.75 -> 0.40)
-            b.AddCylinder(new Vector3(0, 0.98f, 0.02f), 0.48f, 0.30f, 0.42f, 16);
+            // Cast-iron Floor Grate Bars (Vỉ sắt đúc 5 nan chịu nhiệt)
+            for (int i = -2; i <= 2; i++)
+            {
+                b.AddBox(new Vector3(i * 0.09f, 0.21f, -0.05f), new Vector3(0.035f, 0.035f, 0.38f));
+            }
 
-            // Chimney Bands & Crown Cowl
-            b.AddCylinder(new Vector3(0, 1.45f, 0.05f), 0.32f, 0.32f, 0.035f, 16);
-            b.AddCylinder(new Vector3(0, 1.85f, 0.05f), 0.32f, 0.32f, 0.035f, 16);
-            b.AddCylinder(new Vector3(0, 2.05f, 0.05f), 0.38f, 0.38f, 0.050f, 16);
+            // Heavy Sculpted Keystone at Top of Arch (Khối đá chốt đỉnh vòm)
+            b.AddTrapezoidPrism(new Vector3(0, 1.08f, -0.26f), new Vector3(0.18f, 0.18f, 0.26f), new Vector3(0.24f, 0.18f, 0.26f), Quaternion.identity);
+
+            // Tiered Hammered Smoke Hood (Nón hút khói sắt đúc thu côn chuẩn tỷ lệ camera)
+            b.AddCylinder(new Vector3(0, 1.22f, 0.00f), 0.38f, 0.26f, 0.22f, 16);
+            b.AddCylinder(new Vector3(0, 1.44f, 0.00f), 0.27f, 0.27f, 0.04f, 16); // Rivet collar band
+
+            // Chimney Flue & Dwarven Crown Cowl (Vương miện tán khói lò rèn đặc trưng)
+            b.AddCylinder(new Vector3(0, 1.62f, 0.00f), 0.23f, 0.33f, 0.07f, 16); // Flared crown
+            b.AddCylinder(new Vector3(0, 1.69f, 0.00f), 0.35f, 0.32f, 0.03f, 16); // Top cap
+
+            // Tuyere Iron Nozzle from bellows on outer right wall (-X in OBJ = +X in Unity)
+            b.AddCylinderOriented(new Vector3(-0.48f, 0.44f, -0.05f), new Vector3(-0.24f, 0.36f, -0.05f), 0.03f, 0.02f, 10);
+
+            // Quench Bucket Iron Hoops & Tongs resting on bucket
+            b.AddCylinder(new Vector3(0.50f, 0.12f, -0.18f), 0.165f, 0.165f, 0.025f, 14);
+            b.AddCylinder(new Vector3(0.50f, 0.24f, -0.18f), 0.175f, 0.175f, 0.025f, 14);
+            b.AddCylinderOriented(new Vector3(0.38f, 0.30f, -0.26f), new Vector3(0.62f, 0.30f, -0.10f), 0.015f, 0.015f, 8);
 
             // ==========================================
-            // GROUP 3: Furnace_Fire (Lòng Than Rực Lửa Đỏ Cam)
+            // GROUP 3: Bronze_Brass (Họa Tiết Đồng Hoàng Gia)
+            // ==========================================
+            b.SetGroup("Bronze_Brass");
+
+            // Keystone Medallion Boss (Đĩa phù hiệu đồng hoàng gia to bản đường kính 0.20m trên mặt tiền)
+            b.AddCylinderOriented(new Vector3(0, 1.08f, -0.37f), new Vector3(0, 1.08f, -0.42f), 0.10f, 0.095f, 16);
+
+            // Left & Right Arch Impost Bronze Accent Plates (Nẹp đồng chân vòm 2 bên)
+            b.AddBox(new Vector3(-0.38f, 0.84f, -0.34f), new Vector3(0.18f, 0.04f, 0.04f));
+            b.AddBox(new Vector3(0.38f, 0.84f, -0.34f), new Vector3(0.18f, 0.04f, 0.04f));
+
+            // Smokehood Rivet Studs around the collar band (8 đinh tán đồng lấp lánh)
+            for (int r = 0; r < 8; r++)
+            {
+                float ra = r * Mathf.PI * 0.25f;
+                b.AddBoxOriented(new Vector3(Mathf.Cos(ra) * 0.28f, 1.46f, Mathf.Sin(ra) * 0.28f),
+                    new Vector3(0.025f, 0.025f, 0.025f), Quaternion.Euler(0, -ra * Mathf.Rad2Deg, 0));
+            }
+
+            // Decorative Arch Base Anchors
+            b.AddBox(new Vector3(-0.26f, 0.88f, -0.33f), new Vector3(0.04f, 0.06f, 0.04f));
+            b.AddBox(new Vector3(0.26f, 0.88f, -0.33f), new Vector3(0.04f, 0.06f, 0.04f));
+
+            // ==========================================
+            // GROUP 4: Furnace_Fire (Lòng Than Rực Lửa & Củi Đang Cháy)
             // ==========================================
             b.SetGroup("Furnace_Fire");
 
-            // Deep Combustion Firebox Core Bed
-            b.AddBox(new Vector3(0, 0.32f, -0.05f), new Vector3(0.52f, 0.12f, 0.42f));
-            b.AddBox(new Vector3(0, 0.42f, -0.08f), new Vector3(0.38f, 0.14f, 0.30f));
-            b.AddBox(new Vector3(0, 0.50f, -0.10f), new Vector3(0.26f, 0.10f, 0.22f));
+            // Combustion Core Ember Bed (Lòng than hồng rực rỡ)
+            b.AddBox(new Vector3(0, 0.24f, -0.05f), new Vector3(0.52f, 0.07f, 0.36f));
+
+            // Multi-Cluster Irregular Coal Nuggets (5 khối than đá nóng đỏ)
+            b.AddBoxOriented(new Vector3(-0.14f, 0.30f, -0.12f), new Vector3(0.16f, 0.09f, 0.16f), Quaternion.Euler(12f, 25f, -10f));
+            b.AddBoxOriented(new Vector3(0.13f, 0.31f, -0.10f), new Vector3(0.15f, 0.10f, 0.15f), Quaternion.Euler(-15f, -30f, 12f));
+            b.AddBoxOriented(new Vector3(-0.08f, 0.32f, 0.06f), new Vector3(0.14f, 0.09f, 0.14f), Quaternion.Euler(20f, 10f, 5f));
+            b.AddBoxOriented(new Vector3(0.11f, 0.31f, 0.08f), new Vector3(0.15f, 0.09f, 0.15f), Quaternion.Euler(-10f, 40f, -8f));
+            b.AddBoxOriented(new Vector3(0f, 0.34f, -0.04f), new Vector3(0.22f, 0.11f, 0.20f), Quaternion.Euler(5f, -15f, 10f));
+
+            // Burning Firewood Split Logs laying criss-cross (3 khúc củi chẻ gối nhau cháy âm ỉ)
+            b.AddCylinderOriented(new Vector3(-0.16f, 0.29f, -0.16f), new Vector3(0.12f, 0.38f, 0.06f), 0.042f, 0.038f, 8);
+            b.AddCylinderOriented(new Vector3(0.15f, 0.30f, -0.14f), new Vector3(-0.11f, 0.40f, 0.04f), 0.040f, 0.036f, 8);
+            b.AddCylinderOriented(new Vector3(-0.06f, 0.38f, -0.18f), new Vector3(0.06f, 0.44f, 0.08f), 0.035f, 0.032f, 8);
+
+            // Rising Blazing Flame Spires (3 ngọn lửa 3D vươn cao soi sáng khoang lò)
+            b.AddCrystalSpire(new Vector3(0, 0.40f, -0.06f), new Vector3(0, 0.64f, -0.06f), 0.08f, 6);
+            b.AddCrystalSpire(new Vector3(-0.09f, 0.38f, -0.08f), new Vector3(-0.07f, 0.56f, -0.08f), 0.05f, 5);
+            b.AddCrystalSpire(new Vector3(0.08f, 0.38f, -0.05f), new Vector3(0.07f, 0.57f, -0.05f), 0.05f, 5);
 
             // ==========================================
-            // GROUP 4: Wood_Stump (Bễ Thổi, Xô Nước & Củi Khô)
+            // GROUP 5: Wood_Stump (Bễ Thổi, Xô Nước & Chồng Củi)
             // ==========================================
             b.SetGroup("Wood_Stump");
 
-            // Bellows on right side (+X)
-            b.AddBox(new Vector3(0.58f, 0.52f, -0.05f), new Vector3(0.18f, 0.24f, 0.36f));
+            // Blacksmith Bellows Assembly on outer right wall (-X in OBJ = +X in Unity)
+            b.AddBoxOriented(new Vector3(-0.56f, 0.58f, -0.05f), new Vector3(0.18f, 0.03f, 0.36f), Quaternion.Euler(0, -15f, 8f));
+            b.AddBoxOriented(new Vector3(-0.56f, 0.49f, -0.05f), new Vector3(0.16f, 0.15f, 0.32f), Quaternion.Euler(0, -15f, 8f));
+            b.AddBoxOriented(new Vector3(-0.56f, 0.40f, -0.05f), new Vector3(0.18f, 0.03f, 0.36f), Quaternion.Euler(0, -15f, 8f));
 
-            // Quench Bucket on left side (-X)
-            b.AddCylinder(new Vector3(-0.58f, 0.11f, -0.32f), 0.15f, 0.17f, 0.22f, 12);
+            // Quench Tub Wooden Staves (Xô gỗ tôi thép bên trái)
+            b.AddCylinder(new Vector3(0.50f, 0.08f, -0.18f), 0.15f, 0.17f, 0.20f, 14);
 
-            // Firewood pile underneath apron (horizontal logs along Z)
-            b.AddCylinderOriented(new Vector3(0.35f, 0.06f, -0.24f), new Vector3(0.35f, 0.06f, -0.48f), 0.045f, 0.045f, 8);
-            b.AddCylinderOriented(new Vector3(0.44f, 0.06f, -0.24f), new Vector3(0.44f, 0.06f, -0.48f), 0.045f, 0.045f, 8);
-            b.AddCylinderOriented(new Vector3(0.39f, 0.13f, -0.24f), new Vector3(0.39f, 0.13f, -0.48f), 0.045f, 0.045f, 8);
+            // Firewood Log Cord Stack (5 khúc củi xếp gọn bên chân bệ)
+            b.AddCylinderOriented(new Vector3(-0.42f, 0.05f, -0.15f), new Vector3(-0.42f, 0.05f, -0.40f), 0.045f, 0.045f, 8);
+            b.AddCylinderOriented(new Vector3(-0.52f, 0.05f, -0.15f), new Vector3(-0.52f, 0.05f, -0.40f), 0.045f, 0.045f, 8);
+            b.AddCylinderOriented(new Vector3(-0.47f, 0.13f, -0.15f), new Vector3(-0.47f, 0.13f, -0.40f), 0.045f, 0.045f, 8);
+            b.AddCylinderOriented(new Vector3(0.49f, 0.05f, -0.38f), new Vector3(0.49f, 0.05f, -0.58f), 0.045f, 0.045f, 8);
+            b.AddCylinderOriented(new Vector3(0.45f, 0.13f, -0.38f), new Vector3(0.45f, 0.13f, -0.58f), 0.045f, 0.045f, 8);
 
             return b.ExportToString("Furnace_Dwarven");
+        }
+
+        /// <summary>
+        /// Sculpted 3D Workshop Materials & Artisan Props on Workbench (Heroic Scale & High Mirror Polish):
+        /// 1. Steel_Polished: Stack of 3 mirror-polished Damascus steel ingots & master finished dagger blade
+        /// 2. Bronze_Brass: Stack of 2 gleaming gold bullion ingots & dagger crossguard/pommel
+        /// 3. Ore_Crystal: 5-spire faceted raw crystal ore cluster
+        /// 4. Dark_Iron: Ore matrix rock base & smithing tongs
+        /// 5. Hot_Ingot: Fresh glowing hot billet clamped in smithing tongs
+        /// 6. Wood_Stump: Leather jeweler craft mat & leather dagger grip
+        /// </summary>
+        public static string BuildDeskMaterialsObj()
+        {
+            ObjBuilder b = new ObjBuilder();
+
+            // ==========================================
+            // GROUP 1: Steel_Polished (Thỏi Thép Damascus Mài Bóng Gương & Lưỡi Kiếm Thần Binh)
+            // ==========================================
+            b.SetGroup("Steel_Polished");
+
+            // Heroic Stack of 3 Beveled Damascus Steel Ingots (Heroic Scale, Bevelled edges, Stamped Hallmarks)
+            // Ingot 1 (Bottom Left)
+            b.AddTrapezoidPrism(new Vector3(-0.16f, 0.035f, 0.04f), new Vector3(0.28f, 0.065f, 0.13f), new Vector3(0.24f, 0.065f, 0.10f), Quaternion.Euler(0, 10f, 0));
+            // Ingot 2 (Bottom Right)
+            b.AddTrapezoidPrism(new Vector3(0.00f, 0.035f, 0.02f), new Vector3(0.28f, 0.065f, 0.13f), new Vector3(0.24f, 0.065f, 0.10f), Quaternion.Euler(0, -6f, 0));
+            // Ingot 3 (Top Pyramid Row)
+            b.AddTrapezoidPrism(new Vector3(-0.08f, 0.100f, 0.03f), new Vector3(0.28f, 0.065f, 0.13f), new Vector3(0.24f, 0.065f, 0.10f), Quaternion.Euler(0, 2f, 0));
+
+            // Stamped Fuller Hallmark on top of Ingot 3 (Khắc dấu triện hoàng gia sắc sảo)
+            b.AddBoxOriented(new Vector3(-0.08f, 0.135f, 0.03f), new Vector3(0.16f, 0.006f, 0.030f), Quaternion.Euler(0, 2f, 0));
+
+            // Finished Master Dagger Double-Edged Blade (Lưỡi đoản kiếm sắc bén, rãnh xẻ máu bóng loáng)
+            b.AddBox(new Vector3(0.24f, 0.028f, -0.02f), new Vector3(0.24f, 0.014f, 0.052f));
+            // Dagger Tip Diamond Pyramid (Mũi kiếm kim cương)
+            b.AddTriangle(new Vector3(0.36f, 0.028f, -0.046f), new Vector3(0.46f, 0.028f, -0.02f), new Vector3(0.36f, 0.035f, -0.02f), new Vector2(0, 0), new Vector2(1, 0.5f), new Vector2(0, 1));
+            b.AddTriangle(new Vector3(0.36f, 0.028f, 0.006f), new Vector3(0.36f, 0.035f, -0.02f), new Vector3(0.46f, 0.028f, -0.02f), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 0.5f));
+            b.AddTriangle(new Vector3(0.36f, 0.028f, -0.046f), new Vector3(0.36f, 0.021f, -0.02f), new Vector3(0.46f, 0.028f, -0.02f), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 0.5f));
+            b.AddTriangle(new Vector3(0.36f, 0.028f, 0.006f), new Vector3(0.46f, 0.028f, -0.02f), new Vector3(0.36f, 0.021f, -0.02f), new Vector2(0, 0), new Vector2(1, 0.5f), new Vector2(0, 1));
+            // Blade Blood Fuller Channel
+            b.AddBox(new Vector3(0.23f, 0.033f, -0.02f), new Vector3(0.18f, 0.006f, 0.012f));
+
+            // ==========================================
+            // GROUP 2: Bronze_Brass (Thỏi Vàng Đúc Khối 9999 & Đốc Dao Chữ Thập)
+            // ==========================================
+            b.SetGroup("Bronze_Brass");
+
+            // Stack of 2 Gleaming Gold Bullion Ingots (2 thỏi vàng nguyên khối ngân khố hoàng gia)
+            b.AddTrapezoidPrism(new Vector3(-0.32f, 0.030f, -0.06f), new Vector3(0.24f, 0.058f, 0.11f), new Vector3(0.20f, 0.058f, 0.085f), Quaternion.Euler(0, 18f, 0));
+            b.AddTrapezoidPrism(new Vector3(-0.30f, 0.088f, -0.05f), new Vector3(0.24f, 0.058f, 0.11f), new Vector3(0.20f, 0.058f, 0.085f), Quaternion.Euler(0, -15f, 0));
+
+            // Dagger Crossguard & Pommel (Đốc kiếm chữ thập và núm chuôi bằng vàng đúc)
+            b.AddBoxOriented(new Vector3(0.11f, 0.028f, -0.02f), new Vector3(0.028f, 0.028f, 0.14f), Quaternion.identity);
+            b.AddCylinder(new Vector3(-0.06f, 0.014f, -0.02f), 0.026f, 0.026f, 0.028f, 14);
+
+            // ==========================================
+            // GROUP 3: Wood_Stump (Tấm Da Nghề Thợ Kim Hoàn & Chuôi Dao)
+            // ==========================================
+            b.SetGroup("Wood_Stump");
+
+            // Leather Jeweler Craft Mat (Tấm da thuộc trải bàn nghệ nhân màu nâu ấm)
+            b.AddBox(new Vector3(0.18f, 0.006f, -0.02f), new Vector3(0.56f, 0.012f, 0.32f));
+
+            // Dagger Handle Grip (Chuôi dao quấn da thuộc)
+            b.AddCylinderOriented(new Vector3(-0.05f, 0.028f, -0.02f), new Vector3(0.10f, 0.028f, -0.02f), 0.018f, 0.020f, 12);
+
+            // ==========================================
+            // GROUP 4: Ore_Crystal (Cụm 5 Trụ Tinh Thể Quặng Lục Giác Phát Quang Huyền Bí)
+            // ==========================================
+            b.SetGroup("Ore_Crystal");
+
+            // 5 Giant Faceted Hexagonal Crystal Spires (Tinh thể pha lê đa diện mọc cao)
+            b.AddCrystalSpire(new Vector3(0.42f, 0.020f, -0.02f), new Vector3(0.43f, 0.34f, -0.02f), 0.048f, 6);
+            b.AddCrystalSpire(new Vector3(0.34f, 0.020f, 0.03f), new Vector3(0.29f, 0.24f, 0.04f), 0.034f, 6);
+            b.AddCrystalSpire(new Vector3(0.50f, 0.020f, -0.01f), new Vector3(0.56f, 0.26f, -0.01f), 0.036f, 6);
+            b.AddCrystalSpire(new Vector3(0.39f, 0.020f, -0.09f), new Vector3(0.37f, 0.17f, -0.12f), 0.028f, 6);
+            b.AddCrystalSpire(new Vector3(0.46f, 0.020f, 0.06f), new Vector3(0.48f, 0.20f, 0.09f), 0.030f, 6);
+
+            // ==========================================
+            // GROUP 5: Dark_Iron (Khối Đá Mẹ & Kìm Rèn Thợ Rèn)
+            // ==========================================
+            b.SetGroup("Dark_Iron");
+
+            // Matrix Rock Base underneath crystals (Bệ đá mẹ dark iron nâng tinh thể)
+            b.AddBox(new Vector3(0.42f, 0.020f, -0.01f), new Vector3(0.26f, 0.040f, 0.22f));
+
+            // Blacksmith Smithing Tongs (Kìm rèn thép hắc thiết tôi dầu)
+            b.AddCylinder(new Vector3(0.04f, 0.022f, 0.16f), 0.022f, 0.022f, 0.032f, 12);
+            b.AddBoxOriented(new Vector3(0.11f, 0.036f, 0.18f), new Vector3(0.12f, 0.024f, 0.020f), Quaternion.Euler(0, 10f, 0));
+            b.AddBoxOriented(new Vector3(0.11f, 0.036f, 0.14f), new Vector3(0.12f, 0.024f, 0.020f), Quaternion.Euler(0, -10f, 0));
+            b.AddCylinderOriented(new Vector3(0.03f, 0.032f, 0.17f), new Vector3(-0.24f, 0.026f, 0.22f), 0.014f, 0.011f, 10);
+            b.AddCylinderOriented(new Vector3(0.03f, 0.032f, 0.15f), new Vector3(-0.23f, 0.026f, 0.10f), 0.014f, 0.011f, 10);
+
+            // ==========================================
+            // GROUP 6: Hot_Ingot (Phôi Thép Nóng Đỏ Rực Kẹp Trong Kìm)
+            // ==========================================
+            b.SetGroup("Hot_Ingot");
+
+            // Glowing hot billet clamped in tongs jaws (Phôi thép nóng đỏ rực lửa)
+            b.AddTrapezoidPrism(new Vector3(0.18f, 0.036f, 0.16f), new Vector3(0.13f, 0.036f, 0.054f), new Vector3(0.12f, 0.036f, 0.048f), Quaternion.Euler(0, 5f, 0));
+
+            return b.ExportToString("Desk_Materials");
         }
 
         /// <summary>

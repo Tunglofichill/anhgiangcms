@@ -229,12 +229,15 @@ namespace Forge.EditorTools
                 {
                     string n = r.gameObject.name.ToLowerInvariant();
                     if (n.Contains("stone")) r.sharedMaterial = matStone;
+                    else if (n.Contains("bronze") || n.Contains("brass")) r.sharedMaterial = matBronze;
                     else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
                     else if (n.Contains("fire") || n.Contains("ember")) r.sharedMaterial = matFire;
                     else if (n.Contains("wood") || n.Contains("stump") || n.Contains("bellow") || n.Contains("bucket")) r.sharedMaterial = matWood;
                     else
                     {
-                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 4)
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 5)
+                            r.sharedMaterials = new Material[] { matStone, matDarkIron, matBronze, matFire, matWood };
+                        else if (r.sharedMaterials != null && r.sharedMaterials.Length >= 4)
                             r.sharedMaterials = new Material[] { matStone, matDarkIron, matFire, matWood };
                         else
                             r.sharedMaterial = matStone;
@@ -461,6 +464,63 @@ namespace Forge.EditorTools
             hVisual.hammerPivot = pivot.transform;
             hVisual.restLocalEuler = worldRot.eulerAngles;
 
+            return root;
+        }
+
+        /// <summary>
+        /// Builds the 3D Polished Workshop Materials & Tools on the workbench:
+        /// 1. Stack of 3 mirror-polished Damascus steel ingots with stamped hallmarks
+        /// 2. Stack of 2 gleaming gold bullion ingots
+        /// 3. Faceted glowing crystal ore cluster on matrix stone
+        /// 4. Finished craftsman dagger with brass crossguard & pommel on leather craft mat
+        /// 5. Blacksmith tongs clamping a fresh glowing hot metal billet
+        /// </summary>
+        public static GameObject BuildHeroDeskProps(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
+        {
+            GameObject root = new GameObject("Desk_Props_3D");
+            root.transform.SetParent(parent, false);
+            root.transform.position = worldPos;
+            root.transform.rotation = worldRot;
+
+            Material matSteel = mats["Steel_Polished"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matCrystal = mats["Ore_Crystal"];
+            Material matHotIngot = mats["Hot_Ingot"];
+            Material matWood = mats["Wood_Stump"];
+
+#if UNITY_EDITOR
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Desk_Materials.obj");
+            if (modelPrefab != null)
+            {
+                var inst = Object.Instantiate(modelPrefab, root.transform);
+                inst.name = "Desk_Materials_Mesh";
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+                var rends = inst.GetComponentsInChildren<Renderer>();
+                foreach (var r in rends)
+                {
+                    string n = r.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("steel")) r.sharedMaterial = matSteel;
+                    else if (n.Contains("bronze") || n.Contains("brass") || n.Contains("gold")) r.sharedMaterial = matBronze;
+                    else if (n.Contains("crystal") || n.Contains("ore")) r.sharedMaterial = matCrystal;
+                    else if (n.Contains("hot") || n.Contains("ingot")) r.sharedMaterial = matHotIngot;
+                    else if (n.Contains("wood") || n.Contains("leather") || n.Contains("stump")) r.sharedMaterial = matWood;
+                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else
+                    {
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 6)
+                            r.sharedMaterials = new Material[] { matSteel, matBronze, matWood, matCrystal, matDarkIron, matHotIngot };
+                        else
+                            r.sharedMaterial = matSteel;
+                    }
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    r.receiveShadows = true;
+                }
+                return root;
+            }
+#endif
             return root;
         }
 
