@@ -8,7 +8,7 @@ namespace Forge
     {
         public static MainMenuView Instance { get; private set; }
 
-        private const string STUDIO_URL = "https://pawfoliostudio.vercel.app/";
+        private const string STUDIO_URL = "https://github.com/Tunglofichill/anhgiangcms";
 
         [Header("Main Menu Root")]
         public GameObject panelMainMenu;

@@ -36,7 +36,7 @@ namespace Forge
             }
             Instance = this;
 
-            if (mainCamera == null) mainCamera = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+            if (mainCamera == null) mainCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
             if (cameraTransform == null && mainCamera != null) cameraTransform = mainCamera.transform;
         }
 

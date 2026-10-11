@@ -26,6 +26,7 @@ namespace Forge
 
         [Header("Views")]
         public WorldView worldView;
+        public ForgeLightController lightController;
         public HudView hudView;
         public ShopView shopView;
         public SettingsView settingsView;
@@ -78,6 +79,15 @@ namespace Forge
                 if (milestoneService != null && save.unlockedMilestones != null)
                 {
                     milestoneService.LoadUnlockedMilestones(save.unlockedMilestones);
+                }
+
+                if (economyService != null)
+                {
+                    economyService.HammerLevel = Mathf.Max(1, save.hammerLevel);
+                    economyService.FurnaceLevel = Mathf.Max(1, save.furnaceLevel);
+                    economyService.GlovesLevel = Mathf.Clamp(save.glovesLevel, 0, 10);
+                    economyService.OilLevel = Mathf.Clamp(save.oilLevel, 0, 10);
+                    if (lightController != null) lightController.UpdateFurnaceLevel(economyService.FurnaceLevel);
                 }
 
                 // 3. Calculate Offline Progress BEFORE applying new gains
@@ -228,11 +238,14 @@ namespace Forge
             }
         }
 
-        public void OnFurnaceClicked()
+        public void OnFurnaceClicked(double tapPower = -1.0)
         {
             if (economyService == null) return;
 
-            double tapPower = economyService.CalculateFinalTapPower();
+            if (tapPower <= 0.0)
+            {
+                tapPower = economyService.CalculateFinalTapPower();
+            }
             ore += tapPower;
             totalEarned += tapPower;
 
@@ -249,9 +262,56 @@ namespace Forge
             }
         }
 
-        private void OnBuyRequested(string genId)
+        private void OnBuyRequested(string genOrUpgradeId)
         {
-            TryBuyGenerator(genId);
+            if (genOrUpgradeId.StartsWith("UP_"))
+            {
+                TryBuyToolUpgrade(genOrUpgradeId);
+            }
+            else
+            {
+                TryBuyGenerator(genOrUpgradeId);
+            }
+        }
+
+        public bool TryBuyToolUpgrade(string upgradeId)
+        {
+            if (economyService == null) return false;
+            if (!economyService.CanAffordUpgrade(upgradeId, ore)) return false;
+
+            double cost = economyService.GetUpgradeCost(upgradeId);
+            int curLv = economyService.GetUpgradeLevel(upgradeId);
+            ore -= cost;
+            int newLv = curLv + 1;
+            economyService.SetUpgradeLevel(upgradeId, newLv);
+
+            if (audioService != null)
+            {
+                audioService.PlayUnlock();
+            }
+
+            if (worldView != null)
+            {
+                worldView.PlayUnlockBurst();
+            }
+
+            if (upgradeId == "UP_FURNACE" && lightController != null)
+            {
+                lightController.UpdateFurnaceLevel(newLv);
+            }
+
+            if (milestoneService != null)
+            {
+                milestoneService.CheckMilestones(totalEarned, economyService);
+            }
+
+            if (saveService != null)
+            {
+                saveService.SaveCurrentState();
+            }
+
+            RefreshAllViews();
+            return true;
         }
 
         public bool TryBuyGenerator(string genId)
@@ -339,14 +399,30 @@ namespace Forge
                 hudView.UpdateHUD(ore, dps, rank);
 
                 bool canAffordAny = false;
-                if (economyService != null && generatorDefinitions != null)
+                if (economyService != null)
                 {
-                    foreach (var gen in generatorDefinitions)
+                    if (generatorDefinitions != null)
                     {
-                        if (gen != null && economyService.IsGeneratorUnlocked(gen.id, totalEarned) && economyService.CanAfford(gen.id, ore))
+                        foreach (var gen in generatorDefinitions)
                         {
-                            canAffordAny = true;
-                            break;
+                            if (gen != null && economyService.IsGeneratorUnlocked(gen.id, totalEarned) && economyService.CanAfford(gen.id, ore))
+                            {
+                                canAffordAny = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!canAffordAny)
+                    {
+                        string[] uIds = new[] { "UP_HAMMER", "UP_FURNACE", "UP_GLOVES", "UP_OIL" };
+                        foreach (var uid in uIds)
+                        {
+                            if (economyService.CanAffordUpgrade(uid, ore))
+                            {
+                                canAffordAny = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -361,7 +437,11 @@ namespace Forge
                 version = 1,
                 ore = ore,
                 totalEarned = totalEarned,
-                tapLevel = 1
+                tapLevel = economyService != null ? economyService.HammerLevel : 1,
+                hammerLevel = economyService != null ? economyService.HammerLevel : 1,
+                furnaceLevel = economyService != null ? economyService.FurnaceLevel : 1,
+                glovesLevel = economyService != null ? economyService.GlovesLevel : 0,
+                oilLevel = economyService != null ? economyService.OilLevel : 0
             };
 
             if (economyService != null)

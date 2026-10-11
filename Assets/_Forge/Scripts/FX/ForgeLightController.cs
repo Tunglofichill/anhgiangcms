@@ -34,6 +34,20 @@ namespace Forge
             }
         }
 
+        public void UpdateFurnaceLevel(int furnaceLevel)
+        {
+            float bonus = (Mathf.Max(1, furnaceLevel) - 1) * 0.22f;
+            _currentBaseIntensity = defaultBaseIntensity + bonus;
+            if (furnacePointLight != null)
+            {
+                furnacePointLight.range = 2.2f + (furnaceLevel - 1) * 0.12f;
+                if (_pulseCoroutine == null)
+                {
+                    furnacePointLight.intensity = _currentBaseIntensity;
+                }
+            }
+        }
+
         public void Pulse()
         {
             if (furnacePointLight == null) return;

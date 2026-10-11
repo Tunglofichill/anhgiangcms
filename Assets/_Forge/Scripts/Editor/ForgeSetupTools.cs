@@ -858,6 +858,8 @@ namespace Forge.EditorTools
             clickAnvil.audioService = audioService;
             clickAnvil.worldView = worldView;
 
+            gameManager.lightController = lightCtrl;
+
             // 3. [UI] / Canvas
             SetupUI(gameManager);
 
@@ -895,7 +897,7 @@ namespace Forge.EditorTools
 
             // FloatingTextSpawner on Canvas
             var textSpawner = goCanvas.AddComponent<FloatingTextSpawner>();
-            textSpawner.worldCamera = Camera.main != null ? Camera.main : UnityEngine.Object.FindFirstObjectByType<Camera>();
+            textSpawner.worldCamera = Camera.main != null ? Camera.main : UnityEngine.Object.FindAnyObjectByType<Camera>();
             textSpawner.oreIconSprite = spOreIcon;
             textSpawner.font = defaultFont;
 
@@ -1258,22 +1260,92 @@ namespace Forge.EditorTools
             rtShopTitle.anchorMax = new Vector2(0f, 1f);
             rtShopTitle.pivot = new Vector2(0f, 1f);
             rtShopTitle.anchoredPosition = new Vector2(25f, -14f);
-            rtShopTitle.sizeDelta = new Vector2(650f, 42f);
+            rtShopTitle.sizeDelta = new Vector2(350f, 42f);
 
-            // Shop Rows Container
-            GameObject goShopList = new GameObject("ShopList");
+            // Tab 1: Machines
+            GameObject goTabM = new GameObject("BtnTabMachines", typeof(RectTransform), typeof(Image), typeof(Button));
+            goTabM.transform.SetParent(goPanelShop.transform, false);
+            var imgTabM = goTabM.GetComponent<Image>();
+            imgTabM.color = new Color(0.72f, 0.40f, 0.12f, 1f);
+            var btnTabM = goTabM.GetComponent<Button>();
+            var rtTabM = goTabM.GetComponent<RectTransform>();
+            rtTabM.anchorMin = new Vector2(0f, 1f);
+            rtTabM.anchorMax = new Vector2(0f, 1f);
+            rtTabM.pivot = new Vector2(0f, 1f);
+            rtTabM.anchoredPosition = new Vector2(380f, -10f);
+            rtTabM.sizeDelta = new Vector2(240f, 40f);
+
+            GameObject goTxtTabM = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+            goTxtTabM.transform.SetParent(goTabM.transform, false);
+            var tTabM = goTxtTabM.GetComponent<Text>();
+            tTabM.font = defaultFont;
+            tTabM.fontSize = 20;
+            tTabM.fontStyle = FontStyle.Bold;
+            tTabM.alignment = TextAnchor.MiddleCenter;
+            tTabM.color = new Color(1.0f, 0.95f, 0.80f);
+            tTabM.text = "⚙️ DÂY CHUYỀN MÁY";
+            var rtTM = goTxtTabM.GetComponent<RectTransform>();
+            rtTM.anchorMin = Vector2.zero; rtTM.anchorMax = Vector2.one; rtTM.sizeDelta = Vector2.zero;
+            var outTM = goTxtTabM.GetComponent<Outline>();
+            outTM.effectColor = new Color(0.1f, 0.05f, 0.02f, 0.8f);
+            outTM.effectDistance = new Vector2(1f, -1f);
+
+            // Tab 2: Upgrades
+            GameObject goTabU = new GameObject("BtnTabUpgrades", typeof(RectTransform), typeof(Image), typeof(Button));
+            goTabU.transform.SetParent(goPanelShop.transform, false);
+            var imgTabU = goTabU.GetComponent<Image>();
+            imgTabU.color = new Color(0.18f, 0.22f, 0.30f, 0.9f);
+            var btnTabU = goTabU.GetComponent<Button>();
+            var rtTabU = goTabU.GetComponent<RectTransform>();
+            rtTabU.anchorMin = new Vector2(0f, 1f);
+            rtTabU.anchorMax = new Vector2(0f, 1f);
+            rtTabU.pivot = new Vector2(0f, 1f);
+            rtTabU.anchoredPosition = new Vector2(630f, -10f);
+            rtTabU.sizeDelta = new Vector2(240f, 40f);
+
+            GameObject goTxtTabU = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+            goTxtTabU.transform.SetParent(goTabU.transform, false);
+            var tTabU = goTxtTabU.GetComponent<Text>();
+            tTabU.font = defaultFont;
+            tTabU.fontSize = 20;
+            tTabU.fontStyle = FontStyle.Bold;
+            tTabU.alignment = TextAnchor.MiddleCenter;
+            tTabU.color = new Color(0.65f, 0.72f, 0.82f);
+            tTabU.text = "🔨 BÚA & LÒ NUNG";
+            var rtTU = goTxtTabU.GetComponent<RectTransform>();
+            rtTU.anchorMin = Vector2.zero; rtTU.anchorMax = Vector2.one; rtTU.sizeDelta = Vector2.zero;
+            var outTU = goTxtTabU.GetComponent<Outline>();
+            outTU.effectColor = new Color(0.05f, 0.05f, 0.1f, 0.8f);
+            outTU.effectDistance = new Vector2(1f, -1f);
+
+            // Shop Rows Container (Machines)
+            GameObject goShopList = new GameObject("ContainerMachines");
             goShopList.transform.SetParent(goPanelShop.transform, false);
             var rtShopList = goShopList.AddComponent<RectTransform>();
             rtShopList.anchorMin = new Vector2(0f, 0f);
             rtShopList.anchorMax = new Vector2(1f, 1f);
             rtShopList.offsetMin = new Vector2(20f, 15f);
-            rtShopList.offsetMax = new Vector2(-20f, -60f);
+            rtShopList.offsetMax = new Vector2(-20f, -62f);
+
+            // Upgrades Container
+            GameObject goUpgradeList = new GameObject("ContainerUpgrades");
+            goUpgradeList.transform.SetParent(goPanelShop.transform, false);
+            var rtUpgradeList = goUpgradeList.AddComponent<RectTransform>();
+            rtUpgradeList.anchorMin = new Vector2(0f, 0f);
+            rtUpgradeList.anchorMax = new Vector2(1f, 1f);
+            rtUpgradeList.offsetMin = new Vector2(20f, 15f);
+            rtUpgradeList.offsetMax = new Vector2(-20f, -62f);
+            goUpgradeList.SetActive(false);
 
             var shopView = goCanvas.AddComponent<ShopView>();
             shopView.panelShop = goPanelShop;
             shopView.btnOpenShop = btnShop;
             shopView.btnCloseShop = btnClose;
             shopView.txtShopTitle = txtShopTitle;
+            shopView.btnTabMachines = btnTabM;
+            shopView.btnTabUpgrades = btnTabU;
+            shopView.containerMachines = goShopList;
+            shopView.containerUpgrades = goUpgradeList;
 
             // Generate 5 Rows with LARGE, CLEAR FONT and crisp layout
             string[] gNames = new[] { "Tay Búa Tí Hon", "Cũi Đào Quặng", "Lò Than Tự Đun", "Cối Xay Kim", "Robot Thợ Cả" };
@@ -1422,6 +1494,163 @@ namespace Forge.EditorTools
 
                 shopView.shopRows.Add(rowView);
             }
+
+            // Generate 4 Tool & Furnace Upgrade Rows in ContainerUpgrades
+            string[] upIds = new[] { "UP_HAMMER", "UP_FURNACE", "UP_GLOVES", "UP_OIL" };
+            string[] upNames = new[] { "Búa Rèn Thần Binh", "Lò Nung Nhiệt Hạch", "Găng Tay Da Rồng", "Dầu Tôi Huyền Bí" };
+            string[] upSprites = new[] {
+                "Assets/_Forge/Art/Textures/Icons/Icon_G1_Hammer.png",
+                "Assets/_Forge/Art/Textures/Hero_Furnace.png",
+                "Assets/_Forge/Art/Textures/Hero_Anvil.png",
+                "Assets/_Forge/Art/Textures/Icons/Icon_Ore_Nugget.png"
+            };
+
+            for (int i = 0; i < 4; i++)
+            {
+                GameObject goRow = new GameObject($"Row_{upIds[i]}");
+                goRow.transform.SetParent(goUpgradeList.transform, false);
+                var imgRow = goRow.AddComponent<Image>();
+                imgRow.color = new Color(0.20f, 0.18f, 0.26f, 0.90f);
+                var rtRow = goRow.GetComponent<RectTransform>();
+                rtRow.anchorMin = new Vector2(0f, 1f);
+                rtRow.anchorMax = new Vector2(1f, 1f);
+                rtRow.pivot = new Vector2(0.5f, 1f);
+                rtRow.anchoredPosition = new Vector2(0f, -(i * 88f));
+                rtRow.sizeDelta = new Vector2(0f, 80f);
+
+                var rowView = goRow.AddComponent<ShopRowView>();
+
+                // Icon preview
+                GameObject goIcon = new GameObject("ImgIcon");
+                goIcon.transform.SetParent(goRow.transform, false);
+                var imgIcon = goIcon.AddComponent<Image>();
+                imgIcon.preserveAspect = true;
+                Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(upSprites[i]);
+                if (sp != null) imgIcon.sprite = sp;
+                var rtIcon = goIcon.GetComponent<RectTransform>();
+                rtIcon.anchorMin = new Vector2(0f, 0.5f);
+                rtIcon.anchorMax = new Vector2(0f, 0.5f);
+                rtIcon.pivot = new Vector2(0f, 0.5f);
+                rtIcon.anchoredPosition = new Vector2(14f, 0f);
+                rtIcon.sizeDelta = new Vector2(58f, 58f);
+
+                // Name
+                GameObject goName = new GameObject("TxtName", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goName.transform.SetParent(goRow.transform, false);
+                var tName = goName.GetComponent<Text>();
+                tName.font = defaultFont;
+                tName.fontSize = 26;
+                tName.fontStyle = FontStyle.Bold;
+                tName.alignment = TextAnchor.MiddleLeft;
+                tName.color = new Color(1.0f, 0.95f, 0.85f);
+                tName.text = upNames[i];
+                var rtN = goName.GetComponent<RectTransform>();
+                rtN.anchorMin = new Vector2(0f, 0.5f);
+                rtN.anchorMax = new Vector2(0f, 0.5f);
+                rtN.pivot = new Vector2(0f, 0.5f);
+                rtN.anchoredPosition = new Vector2(82f, 12f);
+                rtN.sizeDelta = new Vector2(280f, 32f);
+                var outName = goName.GetComponent<Outline>();
+                outName.effectColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+                outName.effectDistance = new Vector2(1f, -1f);
+
+                // Level
+                GameObject goLv = new GameObject("TxtLevel", typeof(RectTransform), typeof(Text));
+                goLv.transform.SetParent(goRow.transform, false);
+                var tLv = goLv.GetComponent<Text>();
+                tLv.font = defaultFont;
+                tLv.fontSize = 20;
+                tLv.color = new Color(0.70f, 0.75f, 0.85f);
+                tLv.text = "Cấp: 1";
+                var rtLv = goLv.GetComponent<RectTransform>();
+                rtLv.anchorMin = new Vector2(0f, 0.5f);
+                rtLv.anchorMax = new Vector2(0f, 0.5f);
+                rtLv.pivot = new Vector2(0f, 0.5f);
+                rtLv.anchoredPosition = new Vector2(82f, -16f);
+                rtLv.sizeDelta = new Vector2(220f, 26f);
+
+                // Output/Bonus stat
+                GameObject goOut = new GameObject("TxtOutput", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goOut.transform.SetParent(goRow.transform, false);
+                var tOut = goOut.GetComponent<Text>();
+                tOut.font = defaultFont;
+                tOut.fontSize = 22;
+                tOut.fontStyle = FontStyle.Bold;
+                tOut.alignment = TextAnchor.MiddleLeft;
+                tOut.color = new Color(1.0f, 0.75f, 0.30f);
+                tOut.text = "+0";
+                var rtOut = goOut.GetComponent<RectTransform>();
+                rtOut.anchorMin = new Vector2(0f, 0.5f);
+                rtOut.anchorMax = new Vector2(0f, 0.5f);
+                rtOut.pivot = new Vector2(0f, 0.5f);
+                rtOut.anchoredPosition = new Vector2(370f, 0f);
+                rtOut.sizeDelta = new Vector2(240f, 32f);
+                var outOut = goOut.GetComponent<Outline>();
+                outOut.effectColor = new Color(0.15f, 0.08f, 0.02f, 0.9f);
+                outOut.effectDistance = new Vector2(1f, -1f);
+
+                // Cost
+                GameObject goCost = new GameObject("TxtCost", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goCost.transform.SetParent(goRow.transform, false);
+                var tCost = goCost.GetComponent<Text>();
+                tCost.font = defaultFont;
+                tCost.fontSize = 22;
+                tCost.fontStyle = FontStyle.Bold;
+                tCost.alignment = TextAnchor.MiddleRight;
+                tCost.resizeTextForBestFit = true;
+                tCost.resizeTextMinSize = 13;
+                tCost.resizeTextMaxSize = 22;
+                tCost.color = new Color(1.0f, 0.85f, 0.35f);
+                tCost.text = "Giá: 50";
+                var rtCost = goCost.GetComponent<RectTransform>();
+                rtCost.anchorMin = new Vector2(1f, 0.5f);
+                rtCost.anchorMax = new Vector2(1f, 0.5f);
+                rtCost.pivot = new Vector2(1f, 0.5f);
+                rtCost.anchoredPosition = new Vector2(-190f, 0f);
+                rtCost.sizeDelta = new Vector2(300f, 44f);
+                var outCost = goCost.GetComponent<Outline>();
+                outCost.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.9f);
+                outCost.effectDistance = new Vector2(1f, -1f);
+
+                // Buy button
+                GameObject goBuy = new GameObject("BtnBuy", typeof(RectTransform), typeof(Image), typeof(Button));
+                goBuy.transform.SetParent(goRow.transform, false);
+                var imgBuy = goBuy.GetComponent<Image>();
+                imgBuy.color = new Color(0.20f, 0.68f, 0.32f);
+                var btnBuy = goBuy.GetComponent<Button>();
+                var rtBuy = goBuy.GetComponent<RectTransform>();
+                rtBuy.anchorMin = new Vector2(1f, 0.5f);
+                rtBuy.anchorMax = new Vector2(1f, 0.5f);
+                rtBuy.pivot = new Vector2(1f, 0.5f);
+                rtBuy.anchoredPosition = new Vector2(-15f, 0f);
+                rtBuy.sizeDelta = new Vector2(160f, 52f);
+
+                GameObject goBuyTxt = new GameObject("Txt", typeof(RectTransform), typeof(Text), typeof(Outline));
+                goBuyTxt.transform.SetParent(goBuy.transform, false);
+                var tBuyTxt = goBuyTxt.GetComponent<Text>();
+                tBuyTxt.font = defaultFont;
+                tBuyTxt.fontSize = 22;
+                tBuyTxt.fontStyle = FontStyle.Bold;
+                tBuyTxt.alignment = TextAnchor.MiddleCenter;
+                tBuyTxt.color = Color.white;
+                tBuyTxt.text = "Nâng Cấp";
+                var rtBt = goBuyTxt.GetComponent<RectTransform>();
+                rtBt.anchorMin = Vector2.zero;
+                rtBt.anchorMax = Vector2.one;
+                rtBt.sizeDelta = Vector2.zero;
+                var outBuy = goBuyTxt.GetComponent<Outline>();
+                outBuy.effectColor = new Color(0.05f, 0.18f, 0.06f, 0.9f);
+                outBuy.effectDistance = new Vector2(1.5f, -1.5f);
+
+                rowView.txtName = tName;
+                rowView.txtLevel = tLv;
+                rowView.txtOutput = tOut;
+                rowView.txtCost = tCost;
+                rowView.btnBuy = btnBuy;
+                rowView.imgIcon = imgIcon;
+
+                shopView.upgradeRows.Add(rowView);
+            }
             gm.shopView = shopView;
 
             // --- PanelOfflinePopup: 520x280 ---
@@ -1515,7 +1744,7 @@ namespace Forge.EditorTools
 
             // 7. Orientation Manager
             var orientMgr = goCanvas.AddComponent<OrientationManager>();
-            orientMgr.mainCamera = Camera.main != null ? Camera.main : UnityEngine.Object.FindFirstObjectByType<Camera>();
+            orientMgr.mainCamera = Camera.main != null ? Camera.main : UnityEngine.Object.FindAnyObjectByType<Camera>();
             if (orientMgr.mainCamera != null) orientMgr.cameraTransform = orientMgr.mainCamera.transform;
             orientMgr.canvasScaler = scaler;
             orientMgr.rtCardCurrency = rtCardCurr;

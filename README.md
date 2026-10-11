@@ -31,6 +31,14 @@ Trò chơi được phát triển theo tiêu chuẩn kỹ thuật hiện đại 
 ## ✨ 2. Tính Năng Nổi Bật
 
 - 🔨 **Tương Tác Đe Rèn 0ms Latency:** Cơ chế Clicker Raycast 3D phản hồi tức thì kèm hiệu ứng rung màn hình (*Camera Punch*), tia lửa phát sáng và âm thanh đe búa kim loại sống động.
+- ⚒️ **Hệ Thống Nâng Cấp Búa Rèn & Lò Nung 3D (Tools & Forge Upgrades):**
+  - **Búa Rèn Thần Binh (`UP_HAMMER`):** Gia tăng uy lực mỗi cú đập (*Tap Power*), mở rộng sản lượng quặng khai thác tức thời.
+  - **Lò Nung Nhiệt Hạch (`UP_FURNACE`):** Tăng theo % toàn bộ tổng sản lượng công xưởng + Hiệu ứng ánh sáng Point Light 3D rực lửa theo cấp độ.
+  - **Găng Tay Da Rồng (`UP_GLOVES`):** Kích hoạt tỷ lệ Bạo Kích (*Critical Strike* x5 Quặng) hiển thị chữ nổ Ruby rực lửa `💥 CRIT!`.
+  - **Dầu Tôi Huyền Bí (`UP_OIL`):** Gia tăng tốc độ khai thác tự động của toàn bộ dàn máy móc (+15% DPS/cấp).
+- 🛒 **Cửa Hàng Công Xưởng 2 Tab Chuyên Biệt (Two-Tab Workshop UI):**
+  - **Tab 1: ⚙️ DÂY CHUYỀN MÁY MÓC (G1..G5)** — Mua sắm và nâng cấp các trạm máy tự động hóa từ *Tay Búa Tí Hon* đến *Robot Thợ Cả*.
+  - **Tab 2: 🔨 BÚA & LÒ NUNG (Tools & Forge)** — Nâng cấp vũ khí thợ rèn, cường hóa lò nhiệt hạch và kích hoạt bạo kích.
 - ⚙️ **Hệ Thống Tự Động Hóa 5 Thế Hệ Máy Móc:**
   - `G1: Búa Tí Hon (Tiny Hammer)` — Sản lượng 1 quặng/s
   - `G2: Mũi Khoan Quặng (Ore Drill)` — Sản lượng 5 quặng/s

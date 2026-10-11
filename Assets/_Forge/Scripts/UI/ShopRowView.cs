@@ -62,6 +62,12 @@ namespace Forge
         {
             if (economy == null || string.IsNullOrEmpty(_generatorId)) return;
 
+            if (_generatorId.StartsWith("UP_"))
+            {
+                RefreshToolUpgrade(economy, currentOre);
+                return;
+            }
+
             var def = economy.GetDefinition(_generatorId);
             if (def == null) return;
 
@@ -124,6 +130,72 @@ namespace Forge
                 btnBuy.interactable = canAfford;
                 var tBuy = btnBuy.GetComponentInChildren<Text>();
                 if (tBuy != null) tBuy.text = LocalizationService.Get("UPGRADE_BTN");
+            }
+        }
+
+        private void RefreshToolUpgrade(EconomyService economy, double currentOre)
+        {
+            int currentLevel = economy.GetUpgradeLevel(_generatorId);
+            bool isMax = economy.IsUpgradeMaxLevel(_generatorId);
+            double cost = economy.GetUpgradeCost(_generatorId);
+            bool canAfford = economy.CanAffordUpgrade(_generatorId, currentOre);
+
+            string title = LocalizationService.Get(_generatorId + "_NAME");
+            string statBonus = "";
+
+            switch (_generatorId)
+            {
+                case "UP_HAMMER":
+                    int hLv = Mathf.Max(1, currentLevel);
+                    double tap = 1.0 + (hLv - 1) * 2.0 + (hLv / 5) * 5.0;
+                    statBonus = LocalizationService.Get("UP_HAMMER_DESC", HudView.FormatNumber(tap));
+                    break;
+                case "UP_FURNACE":
+                    int fBonus = (Mathf.Max(1, currentLevel) - 1) * 15;
+                    statBonus = LocalizationService.Get("UP_FURNACE_DESC", fBonus);
+                    break;
+                case "UP_GLOVES":
+                    int critRate = currentLevel * 5;
+                    statBonus = LocalizationService.Get("UP_GLOVES_DESC", critRate);
+                    break;
+                case "UP_OIL":
+                    int dpsBonus = currentLevel * 15;
+                    statBonus = LocalizationService.Get("UP_OIL_DESC", dpsBonus);
+                    break;
+            }
+
+            if (txtName != null) txtName.text = title;
+            if (txtLevel != null)
+            {
+                txtLevel.text = isMax ? LocalizationService.Get("UPGRADE_MAX") : LocalizationService.Get("LEVEL_LABEL", currentLevel);
+            }
+            if (txtOutput != null)
+            {
+                txtOutput.text = statBonus;
+                txtOutput.color = new Color(1.0f, 0.75f, 0.30f); // Fiery Amber
+            }
+            if (txtCost != null)
+            {
+                if (isMax)
+                {
+                    txtCost.text = LocalizationService.Get("UPGRADE_MAX");
+                    txtCost.color = new Color(0.6f, 0.9f, 0.6f);
+                }
+                else
+                {
+                    txtCost.text = LocalizationService.Get("COST_LABEL", HudView.FormatNumber(cost));
+                    txtCost.color = new Color(1.0f, 0.88f, 0.35f);
+                }
+            }
+
+            if (btnBuy != null)
+            {
+                btnBuy.interactable = !isMax && canAfford;
+                var tBuy = btnBuy.GetComponentInChildren<Text>();
+                if (tBuy != null)
+                {
+                    tBuy.text = isMax ? LocalizationService.Get("UPGRADE_MAX") : LocalizationService.Get("UPGRADE_BTN");
+                }
             }
         }
     }

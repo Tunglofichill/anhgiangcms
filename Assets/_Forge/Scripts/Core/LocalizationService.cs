@@ -28,13 +28,26 @@ namespace Forge
 
             // Shop
             { "SHOP_TITLE", "CÔNG XƯỞNG TỰ ĐỘNG HÓA" },
+            { "SHOP_TAB_MACHINES", "⚙️ DÂY CHUYỀN MÁY" },
+            { "SHOP_TAB_UPGRADES", "🔨 BÚA & LÒ NUNG" },
             { "UPGRADE_BTN", "Nâng Cấp" },
+            { "UPGRADE_MAX", "ĐÃ TỐI ĐA" },
             { "LEVEL_LABEL", "Cấp: {0}" },
             { "RATE_LABEL", "+{0}/s" },
             { "COST_LABEL", "Giá: {0}" },
             { "LOCKED_ORE", "Chưa mở — cần {0} Quặng" },
             { "LOCKED_GEN", "Chưa mở — cần {0} cấp {1}" },
             { "LOCKED_SUFFIX", "(Khóa)" },
+
+            // Tool Upgrades
+            { "UP_HAMMER_NAME", "Búa Rèn Thần Binh" },
+            { "UP_HAMMER_DESC", "+{0} Quặng / Cú Đập" },
+            { "UP_FURNACE_NAME", "Lò Nung Nhiệt Hạch" },
+            { "UP_FURNACE_DESC", "+{0}% Sản Lượng & Sáng Lò" },
+            { "UP_GLOVES_NAME", "Găng Tay Da Rồng" },
+            { "UP_GLOVES_DESC", "{0}% Tỉ Lệ Bạo Kích (x5)" },
+            { "UP_OIL_NAME", "Dầu Tôi Huyền Bí" },
+            { "UP_OIL_DESC", "+{0}% Tốc Độ Máy Tự Động" },
 
             // Generator Names
             { "GEN_G1", "Tay Búa Tí Hon" },
@@ -114,13 +127,26 @@ namespace Forge
 
             // Shop
             { "SHOP_TITLE", "AUTOMATION WORKSHOP" },
+            { "SHOP_TAB_MACHINES", "⚙️ MACHINES" },
+            { "SHOP_TAB_UPGRADES", "🔨 TOOLS & FORGE" },
             { "UPGRADE_BTN", "Upgrade" },
+            { "UPGRADE_MAX", "MAX LEVEL" },
             { "LEVEL_LABEL", "Lv: {0}" },
             { "RATE_LABEL", "+{0}/s" },
             { "COST_LABEL", "Cost: {0}" },
             { "LOCKED_ORE", "Locked — requires {0} Ore" },
             { "LOCKED_GEN", "Locked — requires {0} Lv {1}" },
             { "LOCKED_SUFFIX", "(Locked)" },
+
+            // Tool Upgrades
+            { "UP_HAMMER_NAME", "Godly Smith Hammer" },
+            { "UP_HAMMER_DESC", "+{0} Ore / Tap" },
+            { "UP_FURNACE_NAME", "Thermic Core Furnace" },
+            { "UP_FURNACE_DESC", "+{0}% Boost & Glow" },
+            { "UP_GLOVES_NAME", "Dragonscale Gloves" },
+            { "UP_GLOVES_DESC", "{0}% Crit Rate (x5)" },
+            { "UP_OIL_NAME", "Mystic Quenching Oil" },
+            { "UP_OIL_DESC", "+{0}% Machine DPS" },
 
             // Generator Names
             { "GEN_G1", "Tiny Hammer" },

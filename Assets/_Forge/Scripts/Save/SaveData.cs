@@ -24,6 +24,10 @@ namespace Forge
         public double ore = 0.0;
         public double totalEarned = 0.0;
         public int tapLevel = 1;
+        public int hammerLevel = 1;
+        public int furnaceLevel = 1;
+        public int glovesLevel = 0;
+        public int oilLevel = 0;
         public string lastSaveUtc = "";
         public List<GeneratorSaveEntry> generators = new List<GeneratorSaveEntry>();
         public List<string> unlockedMilestones = new List<string>();
@@ -31,6 +35,10 @@ namespace Forge
         public SaveData()
         {
             lastSaveUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            hammerLevel = 1;
+            furnaceLevel = 1;
+            glovesLevel = 0;
+            oilLevel = 0;
             generators = new List<GeneratorSaveEntry>
             {
                 new GeneratorSaveEntry("G1", 0),

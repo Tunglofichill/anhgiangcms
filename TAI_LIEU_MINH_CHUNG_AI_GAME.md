@@ -82,6 +82,9 @@ Gemini 3.8 đóng vai trò Kỹ sư trưởng (*Lead Software Engineer*). Mô h�
    - Tắt `raycastTarget = false` trên toàn bộ component Text phụ trợ, loại bỏ hiện tượng nuốt click chuột, phản hồi tương tác đe rèn tức thời 0ms.
 4. **Bộ công cụ đóng gói độc quyền `ForgeBuildTools.cs`:**
    - Tích hợp menu Editor trong Unity, tự động hóa toàn bộ quy trình biên dịch Standalone Windows x64, gán metadata nhà phát triển **Trường Giang** và icon ứng dụng chuẩn Unity 6.
+5. **Hệ thống Nâng Cấp Búa Rèn & Lò Nung (Hybrid 2D UI + 3D Lighting Integration):**
+   - Mở rộng kiến trúc kinh tế với 4 vật phẩm trang bị (`UP_HAMMER`, `UP_FURNACE`, `UP_GLOVES`, `UP_OIL`) kết nối trực tiếp với ánh sáng URP Point Light (`ForgeLightController.cs`), tạo phản hồi thị giác khi lò nung rực sáng theo từng bậc nâng cấp.
+   - Thiết kế giao diện Cửa Hàng **2 Tab chuyên biệt** trong `ShopView.cs`: Tab 1 (Dây chuyền máy tự động G1-G5) và Tab 2 (Trang bị Búa & Lò Nung), đi cùng cơ chế Bạo Kích x5 Quặng kèm hiệu ứng chữ nổ Ruby rực lửa `💥 CRIT!` (`FloatingTextSpawner.cs`).
 
 ```csharp
 // Trích đoạn mã nguồn đóng gói chuẩn Unity 6 trong ForgeBuildTools.cs:

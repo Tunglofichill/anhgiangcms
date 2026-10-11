@@ -241,14 +241,7 @@ namespace Forge.EditorTools
                         UnityEditor.IconKind.Application
                     );
                 }
-                catch
-                {
-                    try
-                    {
-                        PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Standalone, new[] { iconTex });
-                    }
-                    catch { }
-                }
+                catch { }
             }
 
             // 4. Thiết lập Build Options (Unity 6: targetGroup bị deprecated, bỏ đi)

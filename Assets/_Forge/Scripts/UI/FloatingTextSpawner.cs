@@ -32,11 +32,11 @@ namespace Forge
 
             if (worldCamera == null)
             {
-                worldCamera = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+                worldCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
             }
         }
 
-        public void Spawn(Vector3 worldPosition, double amount)
+        public void Spawn(Vector3 worldPosition, double amount, bool isCrit = false)
         {
             if (canvasRectTransform == null)
             {
@@ -46,7 +46,7 @@ namespace Forge
 
             if (worldCamera == null)
             {
-                worldCamera = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+                worldCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
             }
 
             // Convert world pos to screen pos
@@ -58,10 +58,10 @@ namespace Forge
             screenPos.x += Random.Range(-35f, 35f);
             screenPos.y += Random.Range(10f, 30f);
 
-            StartCoroutine(FloatingItemRoutine(screenPos, amount));
+            StartCoroutine(FloatingItemRoutine(screenPos, amount, isCrit));
         }
 
-        private IEnumerator FloatingItemRoutine(Vector3 startScreenPos, double amount)
+        private IEnumerator FloatingItemRoutine(Vector3 startScreenPos, double amount, bool isCrit)
         {
             // Create root container
             GameObject go = new GameObject("FloatingTextItem", typeof(RectTransform), typeof(CanvasGroup));
@@ -70,7 +70,7 @@ namespace Forge
             RectTransform rt = go.GetComponent<RectTransform>();
             CanvasGroup cg = go.GetComponent<CanvasGroup>();
             rt.position = startScreenPos;
-            rt.sizeDelta = new Vector2(240f, 60f);
+            rt.sizeDelta = isCrit ? new Vector2(300f, 70f) : new Vector2(240f, 60f);
 
             // Layout Horizontal
             HorizontalLayoutGroup hlg = go.AddComponent<HorizontalLayoutGroup>();
@@ -87,7 +87,7 @@ namespace Forge
                 GameObject goIcon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
                 goIcon.transform.SetParent(go.transform, false);
                 RectTransform rtIcon = goIcon.GetComponent<RectTransform>();
-                rtIcon.sizeDelta = new Vector2(36f, 36f);
+                rtIcon.sizeDelta = isCrit ? new Vector2(44f, 44f) : new Vector2(36f, 36f);
                 Image img = goIcon.GetComponent<Image>();
                 img.sprite = oreIconSprite;
                 img.preserveAspect = true;
@@ -97,7 +97,7 @@ namespace Forge
             GameObject goTxt = new GameObject("Text", typeof(RectTransform), typeof(Text), typeof(Outline));
             goTxt.transform.SetParent(go.transform, false);
             RectTransform rtTxt = goTxt.GetComponent<RectTransform>();
-            rtTxt.sizeDelta = new Vector2(160f, 48f);
+            rtTxt.sizeDelta = isCrit ? new Vector2(240f, 54f) : new Vector2(160f, 48f);
 
             Text txt = goTxt.GetComponent<Text>();
             Font chosenFont = font;
@@ -114,15 +114,15 @@ namespace Forge
                 }
             }
             txt.font = chosenFont;
-            txt.fontSize = 32;
+            txt.fontSize = isCrit ? 36 : 32;
             txt.fontStyle = FontStyle.Bold;
             txt.alignment = TextAnchor.MiddleLeft;
-            txt.color = new Color(1.0f, 0.88f, 0.35f, 1.0f); // Bright gold
-            txt.text = $"+{HudView.FormatNumber(amount)}";
+            txt.color = isCrit ? new Color(1.0f, 0.35f, 0.20f, 1.0f) : new Color(1.0f, 0.88f, 0.35f, 1.0f);
+            txt.text = isCrit ? $"💥 CRIT! +{HudView.FormatNumber(amount)}" : $"+{HudView.FormatNumber(amount)}";
 
             Outline outline = goTxt.GetComponent<Outline>();
-            outline.effectColor = new Color(0.12f, 0.08f, 0.02f, 0.95f);
-            outline.effectDistance = new Vector2(2f, -2f);
+            outline.effectColor = isCrit ? new Color(0.40f, 0.05f, 0.02f, 0.95f) : new Color(0.12f, 0.08f, 0.02f, 0.95f);
+            outline.effectDistance = isCrit ? new Vector2(2.5f, -2.5f) : new Vector2(2f, -2f);
 
             // Animation
             float duration = 0.75f;

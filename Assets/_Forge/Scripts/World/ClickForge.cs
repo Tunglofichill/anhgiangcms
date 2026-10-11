@@ -21,7 +21,7 @@ namespace Forge
         private void Awake()
         {
             _boxCollider = GetComponent<BoxCollider>();
-            _mainCamera = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+            _mainCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
         }
 
         private void Update()
@@ -40,7 +40,7 @@ namespace Forge
 
             if (_mainCamera == null)
             {
-                _mainCamera = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+                _mainCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
             }
             if (_mainCamera == null) return;
 
@@ -96,13 +96,14 @@ namespace Forge
             _lastClickFrame = Time.frameCount;
 
             double tapPower = 1.0;
+            bool isCrit = false;
             if (GameManager.Instance != null)
             {
                 if (GameManager.Instance.economyService != null)
                 {
-                    tapPower = GameManager.Instance.economyService.CalculateFinalTapPower();
+                    tapPower = GameManager.Instance.economyService.CalculateFinalTapPower(out isCrit);
                 }
-                GameManager.Instance.OnFurnaceClicked();
+                GameManager.Instance.OnFurnaceClicked(tapPower);
             }
 
             // Visual feedback
@@ -112,10 +113,10 @@ namespace Forge
             if (audioService != null) audioService.PlayHit();
             if (worldView != null) worldView.PlayHitSpark(hitPos);
 
-            // Floating Numbers (+1 Ore)
+            // Floating Numbers (+1 Ore or CRIT)
             if (FloatingTextSpawner.Instance != null)
             {
-                FloatingTextSpawner.Instance.Spawn(hitPos, tapPower);
+                FloatingTextSpawner.Instance.Spawn(hitPos, tapPower, isCrit);
             }
 
             // Tutorial Hint progression
