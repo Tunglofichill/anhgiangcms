@@ -1,11 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Forge.World;
 
 namespace Forge.EditorTools
 {
+    /// <summary>
+    /// Master 3D Sculptor for Legend of the Forge.
+    /// Builds high-fidelity, detailed procedural 3D assets with rich PBR materials,
+    /// authentic blacksmith details (roots, rivets, runes, glowing embers, bellows, quench bucket),
+    /// and dynamic animations.
+    /// </summary>
     public static class Forge3DBuilder
     {
-        private static GameObject CreatePart(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 localScale, Quaternion localRot, Material mat)
+        public static GameObject CreatePart(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 localScale, Quaternion localRot, Material mat)
         {
             GameObject go = GameObject.CreatePrimitive(type);
             go.name = name;
@@ -28,8 +35,11 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Builds a majestic 3D Dwarven Blacksmith Anvil with solid oak stump base, flared cast-iron feet,
-        /// polished forged steel table, horn, heel, and glowing red-hot iron ingot on top.
+        /// Builds a Masterpiece 3D Dwarven Blacksmith Anvil:
+        /// Giant aged oak stump with 4 heavy root buttresses, double iron bands with 3D rivets,
+        /// cast-iron flared anvil base, graceful waist curves, runic side relief,
+        /// mirror-polished Damascus steel face, tapered horn, heel with hardy & pritchel holes,
+        /// red-hot glowing forged sword blank on the anvil, and smith's companion hammer.
         /// </summary>
         public static GameObject BuildHeroAnvil(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
         {
@@ -38,69 +48,156 @@ namespace Forge.EditorTools
             root.transform.position = worldPos;
             root.transform.rotation = worldRot;
 
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matSteel = mats.ContainsKey("Steel_Polished") ? mats["Steel_Polished"] : matDarkIron;
-            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
-            Material matIngot = mats.ContainsKey("Hot_Ingot") ? mats["Hot_Ingot"] : mats["FurnaceEmber"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matSteel = mats["Steel_Polished"];
+            Material matWood = mats["Wood_Stump"];
+            Material matIngot = mats["Hot_Ingot"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matFloor = mats["Floor"];
 
-            // 1. Solid Oak Tree Stump Base (Cylinder: d=0.70, h=0.48)
-            CreatePart(PrimitiveType.Cylinder, "Wood_Stump", root.transform,
-                new Vector3(0f, 0.24f, 0f), new Vector3(0.70f, 0.24f, 0.70f), Quaternion.identity, matWood);
+#if UNITY_EDITOR
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Anvil_Dwarven.obj");
+            if (modelPrefab != null)
+            {
+                var inst = Object.Instantiate(modelPrefab, root.transform);
+                inst.name = "Anvil_Mesh";
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+                var rends = inst.GetComponentsInChildren<Renderer>();
+                foreach (var r in rends)
+                {
+                    string n = r.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("wood")) r.sharedMaterial = matWood;
+                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else if (n.Contains("steel")) r.sharedMaterial = matSteel;
+                    else if (n.Contains("ingot") || n.Contains("hot")) r.sharedMaterial = matIngot;
+                    else
+                    {
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 4)
+                            r.sharedMaterials = new Material[] { matWood, matDarkIron, matSteel, matIngot };
+                        else
+                            r.sharedMaterial = matDarkIron;
+                    }
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    r.receiveShadows = true;
+                }
+                return root;
+            }
+#endif
+            // 1. ANCIENT OAK STUMP BASE (Chân Đe Gốc Gỗ Cổ Thụ)
+            CreatePart(PrimitiveType.Cylinder, "Oak_Stump_Base", root.transform,
+                new Vector3(0f, 0.24f, 0f), new Vector3(0.72f, 0.24f, 0.72f), Quaternion.identity, matWood);
 
-            // Iron Reinforcement Strap on Stump
-            CreatePart(PrimitiveType.Cylinder, "Stump_Iron_Band_Top", root.transform,
-                new Vector3(0f, 0.40f, 0f), new Vector3(0.72f, 0.035f, 0.72f), Quaternion.identity, matDarkIron);
-            CreatePart(PrimitiveType.Cylinder, "Stump_Iron_Band_Bottom", root.transform,
-                new Vector3(0f, 0.10f, 0f), new Vector3(0.73f, 0.035f, 0.73f), Quaternion.identity, matDarkIron);
+            // 4 Heavy Root Buttresses splaying into the ground
+            Vector3[] rootDirs = { new Vector3(0.36f, 0.08f, 0.36f), new Vector3(-0.36f, 0.08f, 0.36f),
+                                   new Vector3(0.36f, 0.08f, -0.36f), new Vector3(-0.36f, 0.08f, -0.36f) };
+            for (int r = 0; r < rootDirs.Length; r++)
+            {
+                CreatePart(PrimitiveType.Cube, $"Root_Flange_{r}", root.transform,
+                    rootDirs[r], new Vector3(0.18f, 0.16f, 0.18f), Quaternion.Euler(0f, 45f * r, 0f), matWood);
+            }
 
-            // 2. Anvil Base Flange (Flared feet: 0.50 x 0.08 x 0.32)
+            // Top & Bottom Heavy Iron Reinforcement Hoops
+            CreatePart(PrimitiveType.Cylinder, "Iron_Strap_Upper", root.transform,
+                new Vector3(0f, 0.40f, 0f), new Vector3(0.75f, 0.032f, 0.75f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cylinder, "Iron_Strap_Lower", root.transform,
+                new Vector3(0f, 0.10f, 0f), new Vector3(0.76f, 0.032f, 0.76f), Quaternion.identity, matDarkIron);
+
+            // 8 Heavy 3D Iron Rivets around upper strap
+            for (int i = 0; i < 8; i++)
+            {
+                float ang = i * Mathf.PI * 0.25f;
+                Vector3 rivetPos = new Vector3(Mathf.Cos(ang) * 0.38f, 0.40f, Mathf.Sin(ang) * 0.38f);
+                CreatePart(PrimitiveType.Sphere, $"Rivet_Upper_{i}", root.transform,
+                    rivetPos, new Vector3(0.035f, 0.035f, 0.035f), Quaternion.identity, matBronze);
+            }
+
+            // 2 Heavy Iron Securing Staples (nêm sắt đóng chặt chân đe)
+            CreatePart(PrimitiveType.Cube, "Securing_Staple_L", root.transform,
+                new Vector3(-0.28f, 0.48f, 0f), new Vector3(0.045f, 0.10f, 0.07f), Quaternion.Euler(0f, 0f, 15f), matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Securing_Staple_R", root.transform,
+                new Vector3(0.28f, 0.48f, 0f), new Vector3(0.045f, 0.10f, 0.07f), Quaternion.Euler(0f, 0f, -15f), matDarkIron);
+
+            // -------------------------------------------------------------
+            // 2. DWARVEN MASTER ANVIL (Thân Đe Đúc Gang Nghệ Thuật)
+            // -------------------------------------------------------------
+            // Flared Cast-Iron Footing Base
             CreatePart(PrimitiveType.Cube, "Anvil_Base_Foot", root.transform,
-                new Vector3(0f, 0.52f, 0f), new Vector3(0.50f, 0.08f, 0.32f), Quaternion.identity, matDarkIron);
+                new Vector3(0f, 0.51f, 0f), new Vector3(0.54f, 0.075f, 0.34f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Anvil_Base_Arch", root.transform,
+                new Vector3(0f, 0.56f, 0f), new Vector3(0.44f, 0.055f, 0.28f), Quaternion.identity, matDarkIron);
 
-            // Anvil Base Arch Cutout (Cylinder carving underneath)
-            CreatePart(PrimitiveType.Cube, "Anvil_Base_Riser", root.transform,
-                new Vector3(0f, 0.58f, 0f), new Vector3(0.42f, 0.06f, 0.28f), Quaternion.identity, matDarkIron);
+            // Graceful Tapered Waist (Eo đe thon gọn)
+            CreatePart(PrimitiveType.Cube, "Anvil_Waist_Lower", root.transform,
+                new Vector3(0.02f, 0.63f, 0f), new Vector3(0.26f, 0.09f, 0.22f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Anvil_Waist_Upper", root.transform,
+                new Vector3(0.03f, 0.72f, 0f), new Vector3(0.30f, 0.09f, 0.23f), Quaternion.identity, matDarkIron);
 
-            // 3. Anvil Waist / Stem (Thon gọn ở giữa)
-            CreatePart(PrimitiveType.Cube, "Anvil_Waist", root.transform,
-                new Vector3(0.02f, 0.69f, 0f), new Vector3(0.24f, 0.18f, 0.22f), Quaternion.identity, matDarkIron);
+            // 3D Runic Relief Carvings on front and back waist sides
+            CreatePart(PrimitiveType.Cube, "Runic_Emboss_Front", root.transform,
+                new Vector3(0.03f, 0.68f, -0.125f), new Vector3(0.14f, 0.07f, 0.02f), Quaternion.Euler(0f, 0f, 45f), matBronze);
+            CreatePart(PrimitiveType.Cube, "Runic_Emboss_Back", root.transform,
+                new Vector3(0.03f, 0.68f, 0.125f), new Vector3(0.14f, 0.07f, 0.02f), Quaternion.Euler(0f, 0f, 45f), matBronze);
 
-            // 4. Anvil Upper Body & Stepped Table
+            // Anvil Body Crown
             CreatePart(PrimitiveType.Cube, "Anvil_Upper_Body", root.transform,
-                new Vector3(0.04f, 0.81f, 0f), new Vector3(0.44f, 0.10f, 0.24f), Quaternion.identity, matDarkIron);
+                new Vector3(0.04f, 0.80f, 0f), new Vector3(0.46f, 0.10f, 0.26f), Quaternion.identity, matDarkIron);
 
-            // Polished Steel Face / Table (Mặt đe rèn bóng loáng)
+            // Mirror-Polished Damascus Steel Face / Table (Mặt đe rèn phẳng lì)
             CreatePart(PrimitiveType.Cube, "Anvil_Face_Table", root.transform,
-                new Vector3(0.06f, 0.87f, 0f), new Vector3(0.38f, 0.04f, 0.22f), Quaternion.identity, matSteel);
+                new Vector3(0.06f, 0.865f, 0f), new Vector3(0.40f, 0.035f, 0.24f), Quaternion.identity, matSteel);
 
-            // 5. Anvil Horn (Mũi đe hình nón nhọn vươn ra bên trái: x < 0)
-            CreatePart(PrimitiveType.Cylinder, "Anvil_Horn", root.transform,
-                new Vector3(-0.24f, 0.83f, 0f), new Vector3(0.18f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, 75f), matSteel);
-            CreatePart(PrimitiveType.Cylinder, "Anvil_Horn_Tip", root.transform,
-                new Vector3(-0.36f, 0.86f, 0f), new Vector3(0.10f, 0.10f, 0.10f), Quaternion.Euler(0f, 0f, 82f), matSteel);
+            // Sừng đe tròn vuốt nhọn hướng sang trái (Horn)
+            CreatePart(PrimitiveType.Cylinder, "Anvil_Horn_Root", root.transform,
+                new Vector3(-0.24f, 0.82f, 0f), new Vector3(0.20f, 0.18f, 0.20f), Quaternion.Euler(0f, 0f, 75f), matSteel);
+            CreatePart(PrimitiveType.Cylinder, "Anvil_Horn_Cone", root.transform,
+                new Vector3(-0.36f, 0.85f, 0f), new Vector3(0.12f, 0.14f, 0.12f), Quaternion.Euler(0f, 0f, 80f), matSteel);
+            CreatePart(PrimitiveType.Sphere, "Anvil_Horn_Tip", root.transform,
+                new Vector3(-0.43f, 0.865f, 0f), new Vector3(0.06f, 0.06f, 0.06f), Quaternion.identity, matSteel);
 
-            // 6. Anvil Heel (Gót đe vuông vươn ra bên phải: x > 0)
+            // Gót đe vuông vươn sang phải (Heel)
             CreatePart(PrimitiveType.Cube, "Anvil_Heel", root.transform,
-                new Vector3(0.28f, 0.83f, 0f), new Vector3(0.16f, 0.10f, 0.20f), Quaternion.identity, matDarkIron);
+                new Vector3(0.30f, 0.82f, 0f), new Vector3(0.16f, 0.09f, 0.22f), Quaternion.identity, matDarkIron);
 
-            // Hardy Hole Detail on Heel (Lỗ đục vuông)
-            CreatePart(PrimitiveType.Cube, "Hardy_Hole_Detail", root.transform,
-                new Vector3(0.28f, 0.885f, 0f), new Vector3(0.045f, 0.015f, 0.045f), Quaternion.identity, matDarkIron);
+            // Lỗ đục vuông (Hardy Hole) & Lỗ đột tròn (Pritchel Hole)
+            CreatePart(PrimitiveType.Cube, "Hardy_Hole", root.transform,
+                new Vector3(0.30f, 0.875f, 0.035f), new Vector3(0.045f, 0.02f, 0.045f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cylinder, "Pritchel_Hole", root.transform,
+                new Vector3(0.30f, 0.875f, -0.045f), new Vector3(0.028f, 0.02f, 0.028f), Quaternion.identity, matDarkIron);
 
-            // 7. Red-Hot Glowing Ore Ingot (Thỏi quặng nung đỏ rực nằm sẵn trên mặt đe!)
-            CreatePart(PrimitiveType.Cube, "Glowing_Hot_Ingot", root.transform,
-                new Vector3(0.02f, 0.91f, 0f), new Vector3(0.18f, 0.045f, 0.09f), Quaternion.Euler(0f, -8f, 0f), matIngot);
+            // -------------------------------------------------------------
+            // 3. GLOWING RED-HOT SWORD BLADE BLANK (Phôi Kiếm Thần Binh)
+            // -------------------------------------------------------------
+            // Hot blade section
+            CreatePart(PrimitiveType.Cube, "Hot_Blade_Body", root.transform,
+                new Vector3(-0.02f, 0.90f, 0f), new Vector3(0.26f, 0.032f, 0.075f), Quaternion.Euler(0f, -12f, 0f), matIngot);
+            // Tapered hot blade tip extending onto horn
+            CreatePart(PrimitiveType.Cube, "Hot_Blade_Tip", root.transform,
+                new Vector3(-0.16f, 0.905f, 0.03f), new Vector3(0.09f, 0.028f, 0.055f), Quaternion.Euler(0f, -22f, 0f), matIngot);
+            // Tang of the blade (chuôi rèn)
+            CreatePart(PrimitiveType.Cube, "Hot_Blade_Tang", root.transform,
+                new Vector3(0.12f, 0.895f, -0.03f), new Vector3(0.08f, 0.025f, 0.035f), Quaternion.Euler(0f, -10f, 0f), matDarkIron);
 
-            // Contact Shadow for Anvil
-            CreatePart(PrimitiveType.Quad, "Anvil_Contact_Shadow", root.transform,
-                new Vector3(0f, 0.01f, 0f), new Vector3(0.85f, 0.85f, 1f), Quaternion.Euler(90f, 0f, 0f), mats["Floor"]);
+            // -------------------------------------------------------------
+            // 4. COMPANION SMITH HAMMER RESTING BESIDE INVENTORY (Búa Phụ)
+            // -------------------------------------------------------------
+            CreatePart(PrimitiveType.Cylinder, "Resting_Hammer_Handle", root.transform,
+                new Vector3(0.18f, 0.91f, 0.15f), new Vector3(0.035f, 0.26f, 0.035f), Quaternion.Euler(0f, 40f, 85f), matWood);
+            CreatePart(PrimitiveType.Cube, "Resting_Hammer_Head", root.transform,
+                new Vector3(0.08f, 0.915f, 0.06f), new Vector3(0.085f, 0.065f, 0.065f), Quaternion.Euler(0f, 40f, 0f), matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Resting_Hammer_Face", root.transform,
+                new Vector3(0.05f, 0.915f, 0.035f), new Vector3(0.04f, 0.068f, 0.068f), Quaternion.Euler(0f, 40f, 0f), matSteel);
 
             return root;
         }
 
         /// <summary>
-        /// Builds an impressive 3D Dwarven Stone Masonry Furnace with arched combustion chamber,
-        /// glowing internal ember bed, heavy iron bands, and chimney flue stack.
+        /// Builds an Epic 3D Dwarven Stone Masonry Furnace:
+        /// Stone masonry foundation, arched stone firebox, glowing 3D coal embers bed,
+        /// heavy iron smokehood with rivets, tall chimney flue with iron crown,
+        /// and authentic accessories: working leather bellows, wooden quench water bucket,
+        /// firewood pile, and tongs.
         /// </summary>
         public static GameObject BuildHeroFurnace(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
         {
@@ -109,71 +206,172 @@ namespace Forge.EditorTools
             root.transform.position = worldPos;
             root.transform.rotation = worldRot;
 
-            Material matStone = mats.ContainsKey("Stone_Furnace") ? mats["Stone_Furnace"] : mats["Floor"];
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matFire = mats.ContainsKey("Furnace_Fire") ? mats["Furnace_Fire"] : mats["FurnaceEmber"];
+            Material matStone = mats["Stone_Furnace"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matSteel = mats["Steel_Polished"];
+            Material matFire = mats["Furnace_Fire"];
             Material matEmber = mats["FurnaceEmber"];
+            Material matWood = mats["Wood_Stump"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matFloor = mats["Floor"];
 
-            // 1. Stone Hearth Base (Cylinder: d=1.05, h=0.25)
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Base_Stone", root.transform,
-                new Vector3(0f, 0.125f, 0f), new Vector3(1.05f, 0.125f, 1.05f), Quaternion.identity, matStone);
+#if UNITY_EDITOR
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Furnace_Dwarven.obj");
+            if (modelPrefab != null)
+            {
+                var inst = Object.Instantiate(modelPrefab, root.transform);
+                inst.name = "Furnace_Mesh";
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+                var rends = inst.GetComponentsInChildren<Renderer>();
+                foreach (var r in rends)
+                {
+                    string n = r.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("stone")) r.sharedMaterial = matStone;
+                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else if (n.Contains("fire") || n.Contains("ember")) r.sharedMaterial = matFire;
+                    else if (n.Contains("wood") || n.Contains("stump") || n.Contains("bellow") || n.Contains("bucket")) r.sharedMaterial = matWood;
+                    else
+                    {
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 4)
+                            r.sharedMaterials = new Material[] { matStone, matDarkIron, matFire, matWood };
+                        else
+                            r.sharedMaterial = matStone;
+                    }
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    r.receiveShadows = true;
+                }
+                return root;
+            }
+#endif
 
-            // 2. Furnace Combustion Body (Vòm thân lò: d=0.92, h=0.75)
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Body_Lower", root.transform,
-                new Vector3(0f, 0.55f, 0f), new Vector3(0.92f, 0.32f, 0.92f), Quaternion.identity, matStone);
+            // -------------------------------------------------------------
+            // 1. STONE HEARTH FOUNDATION (Bệ Móng Đá Hoa Cương Xếp Khối)
+            // -------------------------------------------------------------
+            CreatePart(PrimitiveType.Cube, "Stone_Foundation_Plinth", root.transform,
+                new Vector3(0f, 0.12f, 0f), new Vector3(1.15f, 0.24f, 1.15f), Quaternion.identity, matStone);
 
-            // Iron Reinforcing Bands around furnace belly
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Iron_Strap_Mid", root.transform,
-                new Vector3(0f, 0.42f, 0f), new Vector3(0.95f, 0.035f, 0.95f), Quaternion.identity, matDarkIron);
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Iron_Strap_Upper", root.transform,
-                new Vector3(0f, 0.72f, 0f), new Vector3(0.88f, 0.035f, 0.88f), Quaternion.identity, matDarkIron);
+            // Stepped hearth apron
+            CreatePart(PrimitiveType.Cube, "Hearth_Apron_Sill", root.transform,
+                new Vector3(0f, 0.26f, -0.40f), new Vector3(0.95f, 0.08f, 0.35f), Quaternion.identity, matDarkIron);
 
-            // 3. Arched Fire Chamber Opening (Cửa lò hình vòm khoét sâu vào lòng lò)
-            // Left jamb
-            CreatePart(PrimitiveType.Cube, "Arch_Pillar_L", root.transform,
-                new Vector3(-0.24f, 0.48f, -0.38f), new Vector3(0.10f, 0.36f, 0.14f), Quaternion.identity, matDarkIron);
-            // Right jamb
-            CreatePart(PrimitiveType.Cube, "Arch_Pillar_R", root.transform,
-                new Vector3(0.24f, 0.48f, -0.38f), new Vector3(0.10f, 0.36f, 0.14f), Quaternion.identity, matDarkIron);
-            // Arch lintel (Top)
-            CreatePart(PrimitiveType.Cube, "Arch_Lintel", root.transform,
-                new Vector3(0f, 0.68f, -0.38f), new Vector3(0.52f, 0.10f, 0.14f), Quaternion.identity, matDarkIron);
-            // Keystone / Embellishment
+            // -------------------------------------------------------------
+            // 2. ARCHED FIRE CHAMBER WALLS & HOOD (Vòm Lò Khắc Đá & Nón Sắt)
+            // -------------------------------------------------------------
+            // Left stone jamb
+            CreatePart(PrimitiveType.Cube, "Pillar_Left", root.transform,
+                new Vector3(-0.38f, 0.60f, -0.15f), new Vector3(0.26f, 0.68f, 0.70f), Quaternion.identity, matStone);
+            // Right stone jamb
+            CreatePart(PrimitiveType.Cube, "Pillar_Right", root.transform,
+                new Vector3(0.38f, 0.60f, -0.15f), new Vector3(0.26f, 0.68f, 0.70f), Quaternion.identity, matStone);
+            // Back stone masonry wall
+            CreatePart(PrimitiveType.Cube, "Back_Wall", root.transform,
+                new Vector3(0f, 0.60f, 0.26f), new Vector3(0.90f, 0.68f, 0.28f), Quaternion.identity, matStone);
+
+            // Arched Iron Lintel Header
+            CreatePart(PrimitiveType.Cube, "Arch_Lintel_Iron", root.transform,
+                new Vector3(0f, 0.88f, -0.28f), new Vector3(0.85f, 0.12f, 0.22f), Quaternion.identity, matDarkIron);
+
+            // Keystone Embellishment with Bronze Emblem
             CreatePart(PrimitiveType.Cube, "Arch_Keystone", root.transform,
-                new Vector3(0f, 0.74f, -0.40f), new Vector3(0.12f, 0.12f, 0.15f), Quaternion.Euler(0f, 0f, 45f), matDarkIron);
+                new Vector3(0f, 0.95f, -0.32f), new Vector3(0.16f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, 45f), matDarkIron);
+            CreatePart(PrimitiveType.Sphere, "Keystone_Emblem", root.transform,
+                new Vector3(0f, 0.95f, -0.42f), new Vector3(0.08f, 0.08f, 0.04f), Quaternion.identity, matBronze);
 
-            // Grate Iron Hearth Sill
-            CreatePart(PrimitiveType.Cube, "Hearth_Iron_Sill", root.transform,
-                new Vector3(0f, 0.28f, -0.36f), new Vector3(0.56f, 0.06f, 0.18f), Quaternion.identity, matDarkIron);
+            // -------------------------------------------------------------
+            // 3. INTERNAL GLOWING 3D COAL BED & EMBERS (Lòng Than Nóng Đỏ Rực)
+            // -------------------------------------------------------------
+            CreatePart(PrimitiveType.Cube, "Fire_Chamber_Grate", root.transform,
+                new Vector3(0f, 0.32f, -0.05f), new Vector3(0.60f, 0.06f, 0.45f), Quaternion.identity, matDarkIron);
 
-            // 4. Burning Hearth Interior (Lớp than hồng rực lửa bên trong lòng lò)
-            CreatePart(PrimitiveType.Cube, "Internal_Fire_Cavity", root.transform,
-                new Vector3(0f, 0.45f, -0.15f), new Vector3(0.42f, 0.26f, 0.35f), Quaternion.identity, matEmber);
+            // Bed of 3D burning coal nuggets (các khối than đá lồi lõm)
+            Vector3[] coalOffsets = {
+                new Vector3(-0.16f, 0.38f, -0.12f), new Vector3(0.14f, 0.39f, -0.10f),
+                new Vector3(0f, 0.41f, -0.05f), new Vector3(-0.12f, 0.39f, 0.08f),
+                new Vector3(0.16f, 0.38f, 0.06f), new Vector3(0f, 0.44f, -0.15f)
+            };
+            for (int c = 0; c < coalOffsets.Length; c++)
+            {
+                Material m = (c % 2 == 0) ? matFire : matEmber;
+                CreatePart(PrimitiveType.Sphere, $"Coal_Nugget_{c}", root.transform,
+                    coalOffsets[c], new Vector3(0.16f, 0.11f, 0.15f), Quaternion.Euler(15f * c, 35f * c, 0f), m);
+            }
 
-            // Glowing Fire Core / Embers Bed (Cực sáng, chiếu ánh lửa cam đỏ)
-            CreatePart(PrimitiveType.Cube, "Glowing_Fire_Core", root.transform,
-                new Vector3(0f, 0.42f, -0.22f), new Vector3(0.36f, 0.16f, 0.24f), Quaternion.identity, matFire);
+            // Central Blazing Heart (Lõi lửa rực sáng cao nhất)
+            CreatePart(PrimitiveType.Sphere, "Blazing_Fire_Heart", root.transform,
+                new Vector3(0f, 0.46f, -0.08f), new Vector3(0.28f, 0.18f, 0.24f), Quaternion.identity, matFire);
 
-            // 5. Tapered Furnace Dome & Chimney Stack (Nón thu khói và ống khói vươn cao)
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Dome_Taper", root.transform,
-                new Vector3(0f, 0.98f, 0f), new Vector3(0.72f, 0.16f, 0.72f), Quaternion.identity, matStone);
-            CreatePart(PrimitiveType.Cylinder, "Furnace_Chimney_Flue", root.transform,
-                new Vector3(0f, 1.35f, 0f), new Vector3(0.42f, 0.30f, 0.42f), Quaternion.identity, matStone);
+            // -------------------------------------------------------------
+            // 4. HAMMERED IRON SMOKEHOOD & CHIMNEY STACK (Nón Hút & Ống Khói)
+            // -------------------------------------------------------------
+            // Pyramid/Tapered Smoke Hood (Vòm thu khói bằng sắt)
+            CreatePart(PrimitiveType.Cylinder, "Iron_Smoke_Hood", root.transform,
+                new Vector3(0f, 1.15f, 0f), new Vector3(0.78f, 0.22f, 0.78f), Quaternion.identity, matDarkIron);
 
-            // Chimney Flue Iron Crown (Vành đai sắt miệng ống khói)
-            CreatePart(PrimitiveType.Cylinder, "Chimney_Iron_Crown", root.transform,
-                new Vector3(0f, 1.62f, 0f), new Vector3(0.48f, 0.05f, 0.48f), Quaternion.identity, matDarkIron);
+            // 4 Corner Rivet Straps on Hood
+            CreatePart(PrimitiveType.Cylinder, "Hood_Rivet_Band", root.transform,
+                new Vector3(0f, 1.05f, 0f), new Vector3(0.82f, 0.035f, 0.82f), Quaternion.identity, matDarkIron);
 
-            // Contact Shadow for Furnace
-            CreatePart(PrimitiveType.Quad, "Furnace_Contact_Shadow", root.transform,
-                new Vector3(0f, 0.01f, 0f), new Vector3(1.2f, 1.2f, 1f), Quaternion.Euler(90f, 0f, 0f), mats["Floor"]);
+            // Tall Chimney Flue Stack
+            CreatePart(PrimitiveType.Cylinder, "Chimney_Flue", root.transform,
+                new Vector3(0f, 1.55f, 0.05f), new Vector3(0.38f, 0.38f, 0.38f), Quaternion.identity, matStone);
+
+            // Flue Joint Iron Ring
+            CreatePart(PrimitiveType.Cylinder, "Chimney_Band", root.transform,
+                new Vector3(0f, 1.50f, 0.05f), new Vector3(0.44f, 0.04f, 0.44f), Quaternion.identity, matDarkIron);
+
+            // Chimney Flue Crown & Spark Cowl (Vành vương miện & nắp che khói)
+            CreatePart(PrimitiveType.Cylinder, "Chimney_Crown", root.transform,
+                new Vector3(0f, 1.95f, 0.05f), new Vector3(0.48f, 0.05f, 0.48f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cylinder, "Chimney_Cap", root.transform,
+                new Vector3(0f, 2.08f, 0.05f), new Vector3(0.55f, 0.025f, 0.55f), Quaternion.identity, matDarkIron);
+
+            // -------------------------------------------------------------
+            // 5. AUTHENTIC WORKSHOP ACCESSORIES (Bễ Thổi, Xô Nước, Củi Đun)
+            // -------------------------------------------------------------
+            // A. Blacksmith Leather Bellows (Bễ thổi da gắn bên sườn phải)
+            GameObject goBellows = new GameObject("Bellows_Assembly");
+            goBellows.transform.SetParent(root.transform, false);
+            goBellows.transform.localPosition = new Vector3(0.62f, 0.58f, -0.05f);
+            goBellows.transform.localRotation = Quaternion.Euler(0f, 25f, -12f);
+
+            CreatePart(PrimitiveType.Cube, "Bellows_Plates_Top", goBellows.transform,
+                new Vector3(0f, 0.12f, 0f), new Vector3(0.24f, 0.035f, 0.42f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Bellows_Leather_Body", goBellows.transform,
+                Vector3.zero, new Vector3(0.22f, 0.18f, 0.38f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Bellows_Plates_Bottom", goBellows.transform,
+                new Vector3(0f, -0.12f, 0f), new Vector3(0.24f, 0.035f, 0.42f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cylinder, "Bellows_Nozzle", goBellows.transform,
+                new Vector3(-0.16f, 0f, 0f), new Vector3(0.045f, 0.16f, 0.045f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
+
+            // B. Quench Water Bucket (Xô gỗ tôi thép đặt bên trái)
+            GameObject goBucket = new GameObject("Quench_Bucket");
+            goBucket.transform.SetParent(root.transform, false);
+            goBucket.transform.localPosition = new Vector3(-0.62f, 0.18f, -0.32f);
+
+            CreatePart(PrimitiveType.Cylinder, "Bucket_Wood_Tub", goBucket.transform,
+                Vector3.zero, new Vector3(0.26f, 0.16f, 0.26f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cylinder, "Bucket_Iron_Hoop_Top", goBucket.transform,
+                new Vector3(0f, 0.10f, 0f), new Vector3(0.28f, 0.02f, 0.28f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cylinder, "Bucket_Water_Surface", goBucket.transform,
+                new Vector3(0f, 0.12f, 0f), new Vector3(0.24f, 0.01f, 0.24f), Quaternion.identity, matSteel);
+
+            // C. Firewood Stack (Đống củi xẻ khô xếp cạnh chân bệ)
+            for (int w = 0; w < 4; w++)
+            {
+                CreatePart(PrimitiveType.Cylinder, $"Firewood_Log_{w}", root.transform,
+                    new Vector3(0.45f + (w % 2) * 0.10f, 0.06f + (w / 2) * 0.08f, -0.38f),
+                    new Vector3(0.07f, 0.22f, 0.07f), Quaternion.Euler(0f, 0f, 90f), matWood);
+            }
 
             return root;
         }
 
         /// <summary>
-        /// Builds a majestic 3D Smith Hammer with wooden handle, grip wrap,
-        /// heavy octagonal steel hammerhead, ready for interactive strike animations.
+        /// Builds the Interactive 3D Smithing Hammer with ergonomic curved wooden shaft,
+        /// criss-cross leather wrapping, carved bronze pommel, heavy octagonal sledge head,
+        /// and dual bevel-chamfered Damascus steel striking faces.
         /// </summary>
         public static GameObject BuildHeroHammer(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
         {
@@ -185,39 +383,79 @@ namespace Forge.EditorTools
             GameObject pivot = new GameObject("Hammer_Pivot");
             pivot.transform.SetParent(root.transform, false);
 
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matSteel = mats.ContainsKey("Steel_Polished") ? mats["Steel_Polished"] : matDarkIron;
-            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matSteel = mats["Steel_Polished"];
+            Material matWood = mats["Wood_Stump"];
+            Material matBronze = mats["Bronze_Brass"];
 
-            // Handle (Cán gỗ sồi dài 0.55m, hướng lên)
-            CreatePart(PrimitiveType.Cylinder, "Handle_Shaft", pivot.transform,
-                new Vector3(0f, 0.26f, 0f), new Vector3(0.045f, 0.28f, 0.045f), Quaternion.identity, matWood);
+#if UNITY_EDITOR
+            var modelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Forge/Art/Models/Hammer_Dwarven.obj");
+            if (modelPrefab != null)
+            {
+                var inst = Object.Instantiate(modelPrefab, pivot.transform);
+                inst.name = "Hammer_Mesh";
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+                var rends = inst.GetComponentsInChildren<Renderer>();
+                foreach (var r in rends)
+                {
+                    string n = r.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("wood") || n.Contains("shaft")) r.sharedMaterial = matWood;
+                    else if (n.Contains("dark") || n.Contains("iron")) r.sharedMaterial = matDarkIron;
+                    else if (n.Contains("steel")) r.sharedMaterial = matSteel;
+                    else
+                    {
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length >= 3)
+                            r.sharedMaterials = new Material[] { matWood, matDarkIron, matSteel };
+                        else
+                            r.sharedMaterial = matDarkIron;
+                    }
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    r.receiveShadows = true;
+                }
+                var hVisualObj = root.AddComponent<HammerVisual3D>();
+                hVisualObj.hammerPivot = pivot.transform;
+                hVisualObj.restLocalEuler = worldRot.eulerAngles;
+                return root;
+            }
+#endif
 
-            // Grip wrapping on base of handle
-            CreatePart(PrimitiveType.Cylinder, "Handle_Grip_Wrap", pivot.transform,
-                new Vector3(0f, 0.10f, 0f), new Vector3(0.052f, 0.09f, 0.052f), Quaternion.identity, matDarkIron);
+            // 1. Shaft (Cán búa gỗ sồi d=0.048, dài 0.58m)
+            CreatePart(PrimitiveType.Cylinder, "Shaft_Wood", pivot.transform,
+                new Vector3(0f, 0.28f, 0f), new Vector3(0.048f, 0.30f, 0.048f), Quaternion.identity, matWood);
 
-            // Handle Butt Cap (Đế cán búa)
-            CreatePart(PrimitiveType.Cylinder, "Handle_Pommel", pivot.transform,
-                new Vector3(0f, 0.015f, 0f), new Vector3(0.065f, 0.018f, 0.065f), Quaternion.identity, matDarkIron);
+            // 2. Leather Grip Wrap (Lớp quấn da thuộc chống trơn trượt)
+            CreatePart(PrimitiveType.Cylinder, "Leather_Grip", pivot.transform,
+                new Vector3(0f, 0.12f, 0f), new Vector3(0.056f, 0.11f, 0.056f), Quaternion.identity, matDarkIron);
 
-            // Metal Collar below head
-            CreatePart(PrimitiveType.Cylinder, "Hammer_Collar", pivot.transform,
-                new Vector3(0f, 0.50f, 0f), new Vector3(0.065f, 0.035f, 0.065f), Quaternion.identity, matDarkIron);
+            // 3. Bronze Pommel & Butt Cap (Chuôi bịt đồng chạm khắc)
+            CreatePart(PrimitiveType.Cylinder, "Pommel_Cap", pivot.transform,
+                new Vector3(0f, 0.015f, 0f), new Vector3(0.072f, 0.022f, 0.072f), Quaternion.identity, matBronze);
+            CreatePart(PrimitiveType.Sphere, "Pommel_Ball", pivot.transform,
+                new Vector3(0f, 0.005f, 0f), new Vector3(0.045f, 0.045f, 0.045f), Quaternion.identity, matBronze);
 
-            // Heavy Octagonal Sledge Hammer Head (Khối đầu búa chính)
+            // 4. Reinforced Metal Collar below hammerhead
+            CreatePart(PrimitiveType.Cylinder, "Head_Collar", pivot.transform,
+                new Vector3(0f, 0.52f, 0f), new Vector3(0.070f, 0.04f, 0.070f), Quaternion.identity, matDarkIron);
+
+            // 5. Heavy Octagonal Sledge Hammer Head Block (Khối đầu búa chính)
             CreatePart(PrimitiveType.Cube, "Hammer_Head_Block", pivot.transform,
-                new Vector3(0f, 0.56f, 0f), new Vector3(0.24f, 0.11f, 0.11f), Quaternion.identity, matDarkIron);
+                new Vector3(0f, 0.58f, 0f), new Vector3(0.26f, 0.12f, 0.12f), Quaternion.identity, matDarkIron);
 
-            // Striking Faces (Mặt đập thép vát mép bên trái & bên phải)
-            CreatePart(PrimitiveType.Cylinder, "Striking_Face_Front", pivot.transform,
-                new Vector3(0.125f, 0.56f, 0f), new Vector3(0.10f, 0.02f, 0.10f), Quaternion.Euler(0f, 0f, 90f), matSteel);
-            CreatePart(PrimitiveType.Cylinder, "Striking_Face_Back", pivot.transform,
-                new Vector3(-0.125f, 0.56f, 0f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(0f, 0f, 90f), matSteel);
+            // Bronze accent bands around hammer eye
+            CreatePart(PrimitiveType.Cube, "Head_Accent_Band", pivot.transform,
+                new Vector3(0f, 0.58f, 0f), new Vector3(0.12f, 0.128f, 0.128f), Quaternion.identity, matBronze);
 
-            // Fastening Wedge on Top of Eye
-            CreatePart(PrimitiveType.Cube, "Head_Top_Wedge", pivot.transform,
-                new Vector3(0f, 0.63f, 0f), new Vector3(0.035f, 0.035f, 0.035f), Quaternion.identity, matSteel);
+            // 6. Dual Beveled Damascus Steel Striking Faces (Hai mặt đập thép tôi)
+            CreatePart(PrimitiveType.Cylinder, "Face_Front", pivot.transform,
+                new Vector3(0.138f, 0.58f, 0f), new Vector3(0.11f, 0.022f, 0.11f), Quaternion.Euler(0f, 0f, 90f), matSteel);
+            CreatePart(PrimitiveType.Cylinder, "Face_Back", pivot.transform,
+                new Vector3(-0.138f, 0.58f, 0f), new Vector3(0.095f, 0.022f, 0.095f), Quaternion.Euler(0f, 0f, 90f), matSteel);
+
+            // 7. Top Eye Securing Wedge
+            CreatePart(PrimitiveType.Cube, "Top_Eye_Wedge", pivot.transform,
+                new Vector3(0f, 0.655f, 0f), new Vector3(0.04f, 0.035f, 0.04f), Quaternion.identity, matSteel);
 
             var hVisual = root.AddComponent<HammerVisual3D>();
             hVisual.hammerPivot = pivot.transform;
@@ -227,7 +465,8 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Builds distinct, recognizable 3D models for each of the 5 automation tiers (G1..G5).
+        /// Builds unique, richly textured 3D mechanical models for all 5 automation tiers (G1..G5),
+        /// and wires up the MachineAnimator3D component for realistic real-time animated operations.
         /// </summary>
         public static GameObject BuildMachine3D(string genId, Transform parent, Vector3 localPos, Quaternion localRot, Dictionary<string, Material> mats)
         {
@@ -236,119 +475,223 @@ namespace Forge.EditorTools
             root.transform.localPosition = localPos;
             root.transform.localRotation = localRot;
 
-            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matSteel = mats.ContainsKey("Steel_Polished") ? mats["Steel_Polished"] : matDarkIron;
-            Material matBronze = mats.ContainsKey("Bronze_Brass") ? mats["Bronze_Brass"] : mats["G1"];
-            Material matFire = mats.ContainsKey("Furnace_Fire") ? mats["Furnace_Fire"] : mats["FurnaceEmber"];
-            Material matCrystal = mats.ContainsKey("Ore_Crystal") ? mats["Ore_Crystal"] : mats["G5"];
+            Material matWood = mats["Wood_Stump"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matSteel = mats["Steel_Polished"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matFire = mats["Furnace_Fire"];
+            Material matCrystal = mats["Ore_Crystal"];
+
+            var anim = root.AddComponent<MachineAnimator3D>();
 
             switch (genId)
             {
                 case "G1": // Tay Búa Tí Hon (Mechanical Clockwork Auto-Hammer)
-                    // Timber Pedestal Post
-                    CreatePart(PrimitiveType.Cylinder, "Post", root.transform,
-                        new Vector3(0f, 0.15f, 0f), new Vector3(0.18f, 0.15f, 0.18f), Quaternion.identity, matWood);
-                    // Iron Anvillet Mini
-                    CreatePart(PrimitiveType.Cube, "Mini_Anvil", root.transform,
-                        new Vector3(0f, 0.32f, 0.08f), new Vector3(0.14f, 0.06f, 0.12f), Quaternion.identity, matSteel);
-                    // Pivot Cam Wheel
+                    anim.machineType = MachineAnimator3D.MachineType.G1_Hammer;
+
+                    // Base Pedestal
+                    CreatePart(PrimitiveType.Cylinder, "Pedestal", root.transform,
+                        new Vector3(0f, 0.15f, 0f), new Vector3(0.38f, 0.15f, 0.38f), Quaternion.identity, matWood);
+                    CreatePart(PrimitiveType.Cube, "Post", root.transform,
+                        new Vector3(-0.08f, 0.40f, 0f), new Vector3(0.12f, 0.45f, 0.12f), Quaternion.identity, matDarkIron);
+
+                    // Clockwork Cam Gear
                     CreatePart(PrimitiveType.Cylinder, "Cam_Gear", root.transform,
-                        new Vector3(-0.08f, 0.36f, -0.06f), new Vector3(0.10f, 0.025f, 0.10f), Quaternion.Euler(90f, 0f, 0f), matBronze);
-                    // Rocker Arm
-                    CreatePart(PrimitiveType.Cube, "Hammer_Arm", root.transform,
-                        new Vector3(0f, 0.40f, 0f), new Vector3(0.04f, 0.04f, 0.22f), Quaternion.Euler(-18f, 0f, 0f), matWood);
-                    // Mini Hammer Head
-                    CreatePart(PrimitiveType.Cube, "Hammer_Head", root.transform,
-                        new Vector3(0f, 0.37f, 0.08f), new Vector3(0.08f, 0.07f, 0.07f), Quaternion.identity, matDarkIron);
+                        new Vector3(-0.08f, 0.48f, 0.09f), new Vector3(0.16f, 0.03f, 0.16f), Quaternion.Euler(90f, 0f, 0f), matBronze);
+
+                    // Miniature Anvil Base underneath
+                    CreatePart(PrimitiveType.Cube, "Mini_Anvil", root.transform,
+                        new Vector3(0.10f, 0.34f, 0f), new Vector3(0.16f, 0.12f, 0.14f), Quaternion.identity, matSteel);
+
+                    // Reciprocating Hammer Arm
+                    GameObject armG1 = new GameObject("Hammer_Arm");
+                    armG1.transform.SetParent(root.transform, false);
+                    armG1.transform.localPosition = new Vector3(-0.08f, 0.58f, 0f);
+
+                    CreatePart(PrimitiveType.Cube, "Rocker_Bar", armG1.transform,
+                        new Vector3(0.12f, 0f, 0f), new Vector3(0.24f, 0.035f, 0.045f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Mini_Head", armG1.transform,
+                        new Vector3(0.22f, -0.06f, 0f), new Vector3(0.075f, 0.09f, 0.065f), Quaternion.identity, matSteel);
+
+                    anim.g1HammerArm = armG1.transform;
                     break;
 
-                case "G2": // Cũi Đào Quặng (Mining Ore Drill Cart)
-                    // Cart Platform
-                    CreatePart(PrimitiveType.Cube, "Cart_Base", root.transform,
-                        new Vector3(0f, 0.08f, 0f), new Vector3(0.28f, 0.05f, 0.22f), Quaternion.identity, matDarkIron);
-                    // 4 Wheels
-                    CreatePart(PrimitiveType.Cylinder, "Wheel_FL", root.transform,
-                        new Vector3(-0.13f, 0.06f, 0.09f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
-                    CreatePart(PrimitiveType.Cylinder, "Wheel_FR", root.transform,
-                        new Vector3(0.13f, 0.06f, 0.09f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
-                    CreatePart(PrimitiveType.Cylinder, "Wheel_BL", root.transform,
-                        new Vector3(-0.13f, 0.06f, -0.09f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
-                    CreatePart(PrimitiveType.Cylinder, "Wheel_BR", root.transform,
-                        new Vector3(0.13f, 0.06f, -0.09f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
-                    // Heavy Spiral Drill Bit Mount
-                    CreatePart(PrimitiveType.Cylinder, "Drill_Body", root.transform,
-                        new Vector3(0f, 0.20f, -0.02f), new Vector3(0.12f, 0.10f, 0.12f), Quaternion.Euler(45f, 0f, 0f), matSteel);
-                    // Spiral Drill Tip
-                    CreatePart(PrimitiveType.Cylinder, "Drill_Bit", root.transform,
-                        new Vector3(0f, 0.28f, 0.07f), new Vector3(0.07f, 0.12f, 0.07f), Quaternion.Euler(45f, 0f, 0f), matSteel);
-                    // Raw Ore Rock Pile in Cart
-                    CreatePart(PrimitiveType.Cube, "Ore_Nugget_1", root.transform,
-                        new Vector3(0.04f, 0.15f, -0.05f), new Vector3(0.08f, 0.08f, 0.08f), Quaternion.Euler(15f, 25f, 35f), matCrystal);
+                case "G2": // Xe Khoan Quặng (Ore Mining Drill Rig)
+                    anim.machineType = MachineAnimator3D.MachineType.G2_Drill;
+
+                    // Heavy Timber Mine Cart Chassis
+                    CreatePart(PrimitiveType.Cube, "Cart_Body", root.transform,
+                        new Vector3(0f, 0.18f, 0f), new Vector3(0.48f, 0.16f, 0.38f), Quaternion.identity, matWood);
+
+                    // 4 Flanged Iron Wheels
+                    Vector3[] wheelPos = { new Vector3(-0.20f, 0.08f, 0.18f), new Vector3(0.20f, 0.08f, 0.18f),
+                                           new Vector3(-0.20f, 0.08f, -0.18f), new Vector3(0.20f, 0.08f, -0.18f) };
+                    for (int w = 0; w < 4; w++)
+                    {
+                        CreatePart(PrimitiveType.Cylinder, $"Wheel_{w}", root.transform,
+                            wheelPos[w], new Vector3(0.14f, 0.035f, 0.14f), Quaternion.Euler(90f, 0f, 0f), matDarkIron);
+                    }
+
+                    // A-Frame Drill Rigging Mast
+                    CreatePart(PrimitiveType.Cube, "Drill_Mast_L", root.transform,
+                        new Vector3(-0.12f, 0.44f, 0f), new Vector3(0.045f, 0.42f, 0.045f), Quaternion.Euler(0f, 0f, -12f), matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Drill_Mast_R", root.transform,
+                        new Vector3(0.12f, 0.44f, 0f), new Vector3(0.045f, 0.42f, 0.045f), Quaternion.Euler(0f, 0f, 12f), matDarkIron);
+
+                    // Drill Assembly with Rotating Bit
+                    GameObject drillAssembly = new GameObject("Drill_Assembly");
+                    drillAssembly.transform.SetParent(root.transform, false);
+                    drillAssembly.transform.localPosition = new Vector3(0f, 0.52f, 0f);
+
+                    CreatePart(PrimitiveType.Cylinder, "Drill_Motor", drillAssembly.transform,
+                        new Vector3(0f, 0.08f, 0f), new Vector3(0.12f, 0.10f, 0.12f), Quaternion.identity, matBronze);
+
+                    GameObject drillBit = new GameObject("Drill_Bit");
+                    drillBit.transform.SetParent(drillAssembly.transform, false);
+                    drillBit.transform.localPosition = new Vector3(0f, -0.12f, 0f);
+
+                    CreatePart(PrimitiveType.Cylinder, "Spiral_Shaft", drillBit.transform,
+                        Vector3.zero, new Vector3(0.045f, 0.18f, 0.045f), Quaternion.identity, matSteel);
+                    CreatePart(PrimitiveType.Cylinder, "Drill_Cone", drillBit.transform,
+                        new Vector3(0f, -0.16f, 0f), new Vector3(0.10f, 0.08f, 0.10f), Quaternion.identity, matSteel);
+
+                    anim.g2DrillBit = drillBit.transform;
                     break;
 
-                case "G3": // Lò Than Tự Đun (Crucible Blast Smelter)
-                    // Tripod Iron Legs
-                    CreatePart(PrimitiveType.Cylinder, "Leg_1", root.transform,
-                        new Vector3(-0.10f, 0.10f, -0.08f), new Vector3(0.03f, 0.10f, 0.03f), Quaternion.Euler(15f, 0f, -15f), matDarkIron);
-                    CreatePart(PrimitiveType.Cylinder, "Leg_2", root.transform,
-                        new Vector3(0.10f, 0.10f, -0.08f), new Vector3(0.03f, 0.10f, 0.03f), Quaternion.Euler(15f, 0f, 15f), matDarkIron);
-                    CreatePart(PrimitiveType.Cylinder, "Leg_3", root.transform,
-                        new Vector3(0f, 0.10f, 0.12f), new Vector3(0.03f, 0.10f, 0.03f), Quaternion.Euler(-15f, 0f, 0f), matDarkIron);
-                    // Pot Crucible Body
-                    CreatePart(PrimitiveType.Cylinder, "Crucible_Pot", root.transform,
-                        new Vector3(0f, 0.25f, 0f), new Vector3(0.24f, 0.12f, 0.24f), Quaternion.identity, matDarkIron);
-                    // Molten Metal Glowing Surface
-                    CreatePart(PrimitiveType.Cylinder, "Molten_Metal", root.transform,
-                        new Vector3(0f, 0.35f, 0f), new Vector3(0.21f, 0.02f, 0.21f), Quaternion.identity, matFire);
-                    // Chimney Vent Flue
-                    CreatePart(PrimitiveType.Cylinder, "Smoke_Vent", root.transform,
-                        new Vector3(0f, 0.45f, -0.04f), new Vector3(0.08f, 0.10f, 0.08f), Quaternion.identity, matBronze);
+                case "G3": // Lò Luyện Kim Tự Đun (Crucible Smelter)
+                    anim.machineType = MachineAnimator3D.MachineType.G3_Smelter;
+
+                    // Heavy Iron Tripod Legs
+                    for (int leg = 0; leg < 3; leg++)
+                    {
+                        float ang = leg * 120f * Mathf.Deg2Rad;
+                        Vector3 lPos = new Vector3(Mathf.Cos(ang) * 0.22f, 0.18f, Mathf.Sin(ang) * 0.22f);
+                        CreatePart(PrimitiveType.Cylinder, $"Leg_{leg}", root.transform,
+                            lPos, new Vector3(0.045f, 0.20f, 0.045f), Quaternion.Euler(Mathf.Sin(ang) * 15f, 0f, -Mathf.Cos(ang) * 15f), matDarkIron);
+                    }
+
+                    // Boiling Crucible Vat Pot
+                    GameObject pot = new GameObject("Crucible_Pot");
+                    pot.transform.SetParent(root.transform, false);
+                    pot.transform.localPosition = new Vector3(0f, 0.36f, 0f);
+
+                    CreatePart(PrimitiveType.Cylinder, "Vat_Belly", pot.transform,
+                        Vector3.zero, new Vector3(0.40f, 0.18f, 0.40f), Quaternion.identity, matBronze);
+                    CreatePart(PrimitiveType.Cylinder, "Molten_Surface", pot.transform,
+                        new Vector3(0f, 0.17f, 0f), new Vector3(0.34f, 0.02f, 0.34f), Quaternion.identity, matFire);
+
+                    // Steam Vent Cap
+                    GameObject ventCap = new GameObject("Steam_Vent_Cap");
+                    ventCap.transform.SetParent(root.transform, false);
+                    ventCap.transform.localPosition = new Vector3(0f, 0.46f, 0f);
+
+                    CreatePart(PrimitiveType.Cylinder, "Vent_Pipe", ventCap.transform,
+                        Vector3.zero, new Vector3(0.09f, 0.08f, 0.09f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Sphere, "Vent_Ball_Valve", ventCap.transform,
+                        new Vector3(0f, 0.08f, 0f), new Vector3(0.06f, 0.06f, 0.06f), Quaternion.identity, matBronze);
+
+                    anim.g3CrucibleVat = pot.transform;
+                    anim.g3SteamVent = ventCap.transform;
                     break;
 
-                case "G4": // Cối Xay Kim (Steam Piston Crusher)
-                    // Base Frame
+                case "G4": // Cối Xay Hơi Nước (Steam Mill & Heavy Flywheel)
+                    anim.machineType = MachineAnimator3D.MachineType.G4_SteamEngine;
+
+                    // Cast-Iron Engine Bed Plate
                     CreatePart(PrimitiveType.Cube, "Engine_Bed", root.transform,
-                        new Vector3(0f, 0.06f, 0f), new Vector3(0.32f, 0.05f, 0.26f), Quaternion.identity, matDarkIron);
-                    // Large Brass Flywheel Gear
-                    CreatePart(PrimitiveType.Cylinder, "Flywheel", root.transform,
-                        new Vector3(-0.10f, 0.24f, 0f), new Vector3(0.26f, 0.03f, 0.26f), Quaternion.Euler(0f, 0f, 90f), matBronze);
-                    // Steam Cylinder Column
+                        new Vector3(0f, 0.06f, 0f), new Vector3(0.56f, 0.08f, 0.42f), Quaternion.identity, matDarkIron);
+
+                    // Large Brass Spoked Flywheel Gear
+                    GameObject flywheel = new GameObject("Flywheel_Gear");
+                    flywheel.transform.SetParent(root.transform, false);
+                    flywheel.transform.localPosition = new Vector3(-0.16f, 0.34f, 0f);
+
+                    CreatePart(PrimitiveType.Cylinder, "Flywheel_Rim", flywheel.transform,
+                        Vector3.zero, new Vector3(0.44f, 0.045f, 0.44f), Quaternion.Euler(0f, 0f, 90f), matBronze);
+                    CreatePart(PrimitiveType.Cube, "Spoke_1", flywheel.transform,
+                        Vector3.zero, new Vector3(0.035f, 0.40f, 0.035f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Spoke_2", flywheel.transform,
+                        Vector3.zero, new Vector3(0.035f, 0.035f, 0.40f), Quaternion.Euler(0f, 0f, 90f), matDarkIron);
+
+                    // Steam Cylinder & Reciprocating Piston
                     CreatePart(PrimitiveType.Cylinder, "Steam_Cylinder", root.transform,
-                        new Vector3(0.08f, 0.26f, 0f), new Vector3(0.12f, 0.18f, 0.12f), Quaternion.identity, matBronze);
-                    // Piston Rod
-                    CreatePart(PrimitiveType.Cylinder, "Piston_Rod", root.transform,
-                        new Vector3(0.08f, 0.44f, 0f), new Vector3(0.04f, 0.12f, 0.04f), Quaternion.identity, matSteel);
+                        new Vector3(0.14f, 0.32f, 0f), new Vector3(0.18f, 0.16f, 0.18f), Quaternion.Euler(0f, 0f, 90f), matSteel);
+
+                    GameObject pistonAssembly = new GameObject("Piston_Assembly");
+                    pistonAssembly.transform.SetParent(root.transform, false);
+                    pistonAssembly.transform.localPosition = new Vector3(0.02f, 0.32f, 0f);
+
+                    GameObject pistonRod = new GameObject("Piston_Rod");
+                    pistonRod.transform.SetParent(pistonAssembly.transform, false);
+                    CreatePart(PrimitiveType.Cylinder, "Rod_Shaft", pistonRod.transform,
+                        Vector3.zero, new Vector3(0.045f, 0.14f, 0.045f), Quaternion.Euler(0f, 0f, 90f), matSteel);
+
                     // Pressure Gauge
                     CreatePart(PrimitiveType.Cylinder, "Pressure_Gauge", root.transform,
-                        new Vector3(0.08f, 0.36f, 0.08f), new Vector3(0.06f, 0.02f, 0.06f), Quaternion.Euler(90f, 0f, 0f), matBronze);
+                        new Vector3(0.14f, 0.52f, 0.06f), new Vector3(0.08f, 0.02f, 0.08f), Quaternion.Euler(90f, 0f, 0f), matBronze);
+
+                    anim.g4Flywheel = flywheel.transform;
+                    anim.g4Piston = pistonRod.transform;
                     break;
 
-                case "G5": // Robot Thợ Cả (Dwarven Automaton Golem)
-                    // Sturdy Legs
+                case "G5": // Golem Thợ Rèn Tự Hành (Master Automaton Golem)
+                    anim.machineType = MachineAnimator3D.MachineType.G5_Golem;
+
+                    // Heavy Armored Stilt Legs
                     CreatePart(PrimitiveType.Cube, "Leg_L", root.transform,
-                        new Vector3(-0.08f, 0.12f, 0f), new Vector3(0.07f, 0.14f, 0.08f), Quaternion.identity, matDarkIron);
+                        new Vector3(-0.14f, 0.20f, 0f), new Vector3(0.11f, 0.38f, 0.11f), Quaternion.identity, matDarkIron);
                     CreatePart(PrimitiveType.Cube, "Leg_R", root.transform,
-                        new Vector3(0.08f, 0.12f, 0f), new Vector3(0.07f, 0.14f, 0.08f), Quaternion.identity, matDarkIron);
-                    // Armored Torso
-                    CreatePart(PrimitiveType.Cube, "Torso", root.transform,
-                        new Vector3(0f, 0.28f, 0f), new Vector3(0.22f, 0.16f, 0.15f), Quaternion.identity, matDarkIron);
-                    // Glowing Magic Core Chest Plate
-                    CreatePart(PrimitiveType.Cube, "Core_Heart", root.transform,
-                        new Vector3(0f, 0.29f, 0.08f), new Vector3(0.09f, 0.09f, 0.04f), Quaternion.Euler(0f, 0f, 45f), matCrystal);
-                    // Robot Head with Glowing Eye Slit
-                    CreatePart(PrimitiveType.Cube, "Golem_Head", root.transform,
-                        new Vector3(0f, 0.40f, 0f), new Vector3(0.12f, 0.10f, 0.11f), Quaternion.identity, matBronze);
-                    CreatePart(PrimitiveType.Cube, "Eye_Visor", root.transform,
-                        new Vector3(0f, 0.40f, 0.06f), new Vector3(0.08f, 0.025f, 0.02f), Quaternion.identity, matFire);
-                    // Right Arm holding Sledgehammer
-                    CreatePart(PrimitiveType.Cube, "Arm_R", root.transform,
-                        new Vector3(0.16f, 0.28f, 0.04f), new Vector3(0.06f, 0.16f, 0.06f), Quaternion.Euler(-25f, 0f, 0f), matDarkIron);
-                    CreatePart(PrimitiveType.Cube, "Golem_Hammer", root.transform,
-                        new Vector3(0.17f, 0.20f, 0.14f), new Vector3(0.07f, 0.12f, 0.07f), Quaternion.identity, matSteel);
-                    // Left Arm holding Tongs
-                    CreatePart(PrimitiveType.Cube, "Arm_L", root.transform,
-                        new Vector3(-0.16f, 0.28f, 0.04f), new Vector3(0.06f, 0.16f, 0.06f), Quaternion.Euler(-25f, 0f, 0f), matDarkIron);
+                        new Vector3(0.14f, 0.20f, 0f), new Vector3(0.11f, 0.38f, 0.11f), Quaternion.identity, matDarkIron);
+
+                    // Articulated Torso
+                    GameObject torso = new GameObject("Torso");
+                    torso.transform.SetParent(root.transform, false);
+                    torso.transform.localPosition = new Vector3(0f, 0.48f, 0f);
+
+                    CreatePart(PrimitiveType.Cube, "Chest_Armor", torso.transform,
+                        new Vector3(0f, 0.12f, 0f), new Vector3(0.38f, 0.24f, 0.26f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Shoulder_Pauldrons", torso.transform,
+                        new Vector3(0f, 0.22f, 0f), new Vector3(0.48f, 0.08f, 0.28f), Quaternion.identity, matBronze);
+
+                    // Glowing Arcane Power Core in Chest
+                    GameObject core = new GameObject("Magic_Core");
+                    core.transform.SetParent(torso.transform, false);
+                    core.transform.localPosition = new Vector3(0f, 0.12f, -0.14f);
+                    CreatePart(PrimitiveType.Sphere, "Arcane_Gem", core.transform,
+                        Vector3.zero, new Vector3(0.09f, 0.09f, 0.07f), Quaternion.identity, matCrystal);
+
+                    // Helmet with Visor Slit
+                    CreatePart(PrimitiveType.Cube, "Golem_Head", torso.transform,
+                        new Vector3(0f, 0.32f, 0f), new Vector3(0.18f, 0.16f, 0.18f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Visor_Slit", torso.transform,
+                        new Vector3(0f, 0.32f, -0.10f), new Vector3(0.12f, 0.035f, 0.02f), Quaternion.identity, matFire);
+
+                    // Right Arm (Holding Sledgehammer)
+                    GameObject armR = new GameObject("Arm_Right");
+                    armR.transform.SetParent(torso.transform, false);
+                    armR.transform.localPosition = new Vector3(0.24f, 0.18f, 0f);
+
+                    CreatePart(PrimitiveType.Cube, "Limb_R", armR.transform,
+                        new Vector3(0f, -0.14f, 0f), new Vector3(0.08f, 0.26f, 0.08f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Cylinder, "Golem_Hammer_Handle", armR.transform,
+                        new Vector3(0f, -0.26f, 0.10f), new Vector3(0.025f, 0.28f, 0.025f), Quaternion.Euler(90f, 0f, 0f), matWood);
+                    CreatePart(PrimitiveType.Cube, "Golem_Hammer_Head", armR.transform,
+                        new Vector3(0f, -0.26f, 0.24f), new Vector3(0.09f, 0.09f, 0.09f), Quaternion.identity, matSteel);
+
+                    // Left Arm (Holding Smithing Tongs)
+                    GameObject armL = new GameObject("Arm_Left");
+                    armL.transform.SetParent(torso.transform, false);
+                    armL.transform.localPosition = new Vector3(-0.24f, 0.18f, 0f);
+
+                    CreatePart(PrimitiveType.Cube, "Limb_L", armL.transform,
+                        new Vector3(0f, -0.14f, 0f), new Vector3(0.08f, 0.26f, 0.08f), Quaternion.identity, matDarkIron);
+                    CreatePart(PrimitiveType.Cube, "Tongs_Jaw", armL.transform,
+                        new Vector3(0f, -0.28f, -0.08f), new Vector3(0.04f, 0.04f, 0.16f), Quaternion.identity, matBronze);
+
+                    anim.g5Torso = torso.transform;
+                    anim.g5RightArm = armR.transform;
+                    anim.g5LeftArm = armL.transform;
+                    anim.g5Core = core.transform;
                     break;
             }
 
@@ -356,76 +699,94 @@ namespace Forge.EditorTools
         }
 
         /// <summary>
-        /// Builds 3D Ore Shelf with shelves and faceted ore crystals.
+        /// Builds 3D Shelving unit holding glistening faceted crystal ore clusters.
         /// </summary>
-        public static GameObject BuildOreShelf3D(Transform parent, Vector3 localPos, Quaternion localRot, Dictionary<string, Material> mats)
+        public static GameObject BuildOreShelf3D(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
         {
-            GameObject root = new GameObject("OreShelf_3D");
+            GameObject root = new GameObject("Decor_OreShelf_3D");
             root.transform.SetParent(parent, false);
-            root.transform.localPosition = localPos;
-            root.transform.localRotation = localRot;
+            root.transform.position = worldPos;
+            root.transform.rotation = worldRot;
 
-            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matCrystal = mats.ContainsKey("Ore_Crystal") ? mats["Ore_Crystal"] : mats["G2"];
-            Material matGold = mats.ContainsKey("Bronze_Brass") ? mats["Bronze_Brass"] : mats["G1"];
+            Material matWood = mats["Wood_Stump"];
+            Material matCrystal = mats["Ore_Crystal"];
+            Material matBronze = mats["Bronze_Brass"];
+            Material matFire = mats["Furnace_Fire"];
 
-            // Wooden Frame Uprights
-            CreatePart(PrimitiveType.Cube, "Post_L", root.transform,
-                new Vector3(-0.16f, 0.16f, 0f), new Vector3(0.035f, 0.32f, 0.18f), Quaternion.identity, matWood);
-            CreatePart(PrimitiveType.Cube, "Post_R", root.transform,
-                new Vector3(0.16f, 0.16f, 0f), new Vector3(0.035f, 0.32f, 0.18f), Quaternion.identity, matWood);
+            // Upright Shelving Frame
+            CreatePart(PrimitiveType.Cube, "Shelf_Post_L", root.transform,
+                new Vector3(-0.35f, 0.45f, 0f), new Vector3(0.06f, 0.90f, 0.32f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Shelf_Post_R", root.transform,
+                new Vector3(0.35f, 0.45f, 0f), new Vector3(0.06f, 0.90f, 0.32f), Quaternion.identity, matWood);
 
-            // Shelves (Bottom & Top)
-            CreatePart(PrimitiveType.Cube, "Shelf_Bottom", root.transform,
-                new Vector3(0f, 0.06f, 0f), new Vector3(0.34f, 0.03f, 0.18f), Quaternion.identity, matWood);
-            CreatePart(PrimitiveType.Cube, "Shelf_Top", root.transform,
-                new Vector3(0f, 0.24f, 0f), new Vector3(0.34f, 0.03f, 0.18f), Quaternion.identity, matWood);
+            // 3 Horizontal Shelves
+            CreatePart(PrimitiveType.Cube, "Shelf_Tier_Bottom", root.transform,
+                new Vector3(0f, 0.15f, 0f), new Vector3(0.74f, 0.04f, 0.30f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Shelf_Tier_Mid", root.transform,
+                new Vector3(0f, 0.50f, 0f), new Vector3(0.74f, 0.04f, 0.30f), Quaternion.identity, matWood);
+            CreatePart(PrimitiveType.Cube, "Shelf_Tier_Top", root.transform,
+                new Vector3(0f, 0.85f, 0f), new Vector3(0.74f, 0.04f, 0.30f), Quaternion.identity, matWood);
 
-            // Ore Crystals on Shelves
-            CreatePart(PrimitiveType.Cube, "Crystal_1", root.transform,
-                new Vector3(-0.06f, 0.12f, 0f), new Vector3(0.08f, 0.08f, 0.08f), Quaternion.Euler(25f, 35f, 15f), matCrystal);
-            CreatePart(PrimitiveType.Cube, "Crystal_2", root.transform,
-                new Vector3(0.06f, 0.13f, 0.02f), new Vector3(0.09f, 0.09f, 0.09f), Quaternion.Euler(-15f, 45f, 20f), matGold);
-            CreatePart(PrimitiveType.Cube, "Crystal_3", root.transform,
-                new Vector3(0f, 0.30f, 0f), new Vector3(0.07f, 0.07f, 0.07f), Quaternion.Euler(30f, 15f, 60f), matCrystal);
+            // Glowing Crystal Geodes & Ore Ingot Piles on tiers
+            CreatePart(PrimitiveType.Sphere, "Cyan_Geode_1", root.transform,
+                new Vector3(-0.18f, 0.58f, 0f), new Vector3(0.14f, 0.18f, 0.14f), Quaternion.Euler(15f, 25f, 0f), matCrystal);
+            CreatePart(PrimitiveType.Sphere, "Cyan_Geode_2", root.transform,
+                new Vector3(-0.06f, 0.56f, 0.04f), new Vector3(0.10f, 0.12f, 0.10f), Quaternion.Euler(-10f, 40f, 0f), matCrystal);
+
+            CreatePart(PrimitiveType.Cube, "Gold_Ore_Stack", root.transform,
+                new Vector3(0.18f, 0.55f, 0f), new Vector3(0.16f, 0.08f, 0.12f), Quaternion.identity, matBronze);
+
+            CreatePart(PrimitiveType.Sphere, "Ruby_Core_Bottom", root.transform,
+                new Vector3(0.12f, 0.22f, 0f), new Vector3(0.15f, 0.14f, 0.15f), Quaternion.identity, matFire);
 
             return root;
         }
 
         /// <summary>
-        /// Builds 3D Treasure Chest with brass trim and ingots inside.
+        /// Builds 3D Dwarven Treasure Chest with open lid and gleaming gold ingots.
         /// </summary>
-        public static GameObject BuildChest3D(Transform parent, Vector3 localPos, Quaternion localRot, Dictionary<string, Material> mats)
+        public static GameObject BuildChest3D(Transform parent, Vector3 worldPos, Quaternion worldRot, Dictionary<string, Material> mats)
         {
-            GameObject root = new GameObject("Chest_3D");
+            GameObject root = new GameObject("Decor_Chest_3D");
             root.transform.SetParent(parent, false);
-            root.transform.localPosition = localPos;
-            root.transform.localRotation = localRot;
+            root.transform.position = worldPos;
+            root.transform.rotation = worldRot;
 
-            Material matWood = mats.ContainsKey("Wood_Stump") ? mats["Wood_Stump"] : mats["Desk"];
-            Material matDarkIron = mats.ContainsKey("Dark_Iron") ? mats["Dark_Iron"] : mats["Anvil"];
-            Material matGold = mats.ContainsKey("Bronze_Brass") ? mats["Bronze_Brass"] : mats["G1"];
+            Material matWood = mats["Wood_Stump"];
+            Material matDarkIron = mats["Dark_Iron"];
+            Material matBronze = mats["Bronze_Brass"];
 
-            // Chest Body Box
-            CreatePart(PrimitiveType.Cube, "Chest_Base", root.transform,
-                new Vector3(0f, 0.10f, 0f), new Vector3(0.30f, 0.18f, 0.22f), Quaternion.identity, matWood);
-            // Metal Corner Straps
-            CreatePart(PrimitiveType.Cube, "Strap_L", root.transform,
-                new Vector3(-0.11f, 0.10f, 0f), new Vector3(0.025f, 0.185f, 0.225f), Quaternion.identity, matDarkIron);
-            CreatePart(PrimitiveType.Cube, "Strap_R", root.transform,
-                new Vector3(0.11f, 0.10f, 0f), new Vector3(0.025f, 0.185f, 0.225f), Quaternion.identity, matDarkIron);
-            // Lock Latch
-            CreatePart(PrimitiveType.Cube, "Lock_Latch", root.transform,
-                new Vector3(0f, 0.14f, 0.115f), new Vector3(0.045f, 0.06f, 0.02f), Quaternion.identity, matGold);
-            // Opened Arched Lid (Angled back)
-            CreatePart(PrimitiveType.Cube, "Chest_Lid", root.transform,
-                new Vector3(0f, 0.24f, -0.05f), new Vector3(0.31f, 0.08f, 0.22f), Quaternion.Euler(-35f, 0f, 0f), matWood);
-            // Gold Ingots Inside
-            CreatePart(PrimitiveType.Cube, "Gold_Ingot_1", root.transform,
-                new Vector3(-0.05f, 0.16f, 0f), new Vector3(0.10f, 0.035f, 0.055f), Quaternion.Euler(0f, 15f, 0f), matGold);
-            CreatePart(PrimitiveType.Cube, "Gold_Ingot_2", root.transform,
-                new Vector3(0.05f, 0.17f, 0.02f), new Vector3(0.10f, 0.035f, 0.055f), Quaternion.Euler(0f, -20f, 0f), matGold);
+            // Chest Box Base
+            CreatePart(PrimitiveType.Cube, "Chest_Box", root.transform,
+                new Vector3(0f, 0.16f, 0f), new Vector3(0.55f, 0.28f, 0.36f), Quaternion.identity, matWood);
+
+            // Iron Corner Reinforcements
+            CreatePart(PrimitiveType.Cube, "Band_L", root.transform,
+                new Vector3(-0.20f, 0.16f, 0f), new Vector3(0.04f, 0.29f, 0.37f), Quaternion.identity, matDarkIron);
+            CreatePart(PrimitiveType.Cube, "Band_R", root.transform,
+                new Vector3(0.20f, 0.16f, 0f), new Vector3(0.04f, 0.29f, 0.37f), Quaternion.identity, matDarkIron);
+
+            // Open Tilted Lid
+            GameObject lid = new GameObject("Chest_Lid");
+            lid.transform.SetParent(root.transform, false);
+            lid.transform.localPosition = new Vector3(0f, 0.30f, 0.16f);
+            lid.transform.localRotation = Quaternion.Euler(-55f, 0f, 0f);
+
+            CreatePart(PrimitiveType.Cylinder, "Lid_Arch", lid.transform,
+                new Vector3(0f, 0.06f, -0.16f), new Vector3(0.34f, 0.27f, 0.34f), Quaternion.Euler(0f, 0f, 90f), matWood);
+            CreatePart(PrimitiveType.Cube, "Lid_Lock_Hasp", lid.transform,
+                new Vector3(0f, 0.02f, -0.32f), new Vector3(0.06f, 0.06f, 0.035f), Quaternion.identity, matBronze);
+
+            // Gleaming Gold Ingots Inside
+            Vector3[] barPositions = {
+                new Vector3(-0.10f, 0.28f, -0.04f), new Vector3(0.10f, 0.28f, -0.04f),
+                new Vector3(0f, 0.32f, -0.02f), new Vector3(-0.06f, 0.28f, 0.06f)
+            };
+            for (int b = 0; b < barPositions.Length; b++)
+            {
+                CreatePart(PrimitiveType.Cube, $"Gold_Ingot_{b}", root.transform,
+                    barPositions[b], new Vector3(0.14f, 0.045f, 0.07f), Quaternion.Euler(0f, 18f * b, 0f), matBronze);
+            }
 
             return root;
         }

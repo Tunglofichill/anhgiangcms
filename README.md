@@ -28,22 +28,36 @@ Trò chơi được phát triển theo tiêu chuẩn kỹ thuật hiện đại 
 
 ---
 
-## ✨ 2. Tính Năng Nổi Bật
+<p align="center">
+  <img src="Assets/_Forge/Art/Textures/Screenshots/Forge_3D_Scene_Capture.png" alt="In-Engine 3D Dwarven Forge Render (Unity 6 URP)" width="880"/>
+  <br>
+  <i>Hình ảnh thực tế in-engine render thời gian thực trong Unity 6 URP: Native Wavefront OBJ Mesh, PBR Damascus Steel, Carved Stone Hearth, Trilight Lighting & Live Atmospheric Embers.</i>
+</p>
 
-- 🔨 **Tương Tác Đe Rèn 3D & Búa Rèn Động (Interactive 3D Smithing):** 
-  - Mô hình **Đe Rèn 3D Sử Thi** điêu khắc tỉ mỉ với đế gỗ sồi cổ thụ, đai sắt gia cố, mặt đe thép tôi bóng loáng và thỏi phôi quặng nóng đỏ phát quang (`Hot_Ingot`).
-  - **Búa Rèn 3D Tương Tác (`HammerVisual3D.cs`)**: Cán gỗ, đầu búa bát giác hắc thiết tự động vung đập giáng xuống đe `CLANG!` kèm độ nảy đàn hồi (*rebound damping*) và tia lửa phát sáng mỗi lần người chơi nhấp chuột.
-- 🔥 **Lò Nung Đá Vòm 3D & Chiếu Sáng Động (Dynamic 3D Hearth):**
-  - Cấu trúc lò nung đá vòm cong 3D (`Stone_Furnace`) với lòng than củi cháy rực (`Furnace_Fire`), ống khói vương miện sắt.
-  - Đèn URP Point Light đặt trực tiếp trong buồng lửa, tỏa ánh sáng vàng cam chân thực lên bề mặt gỗ và đe rèn theo thời gian thực.
-- ⚙️ **Hệ Thống 5 Thế Hệ Máy Móc 3D Cơ Khí Riêng Biệt (Procedural 3D Machinery):**
-  - `G1: Búa Tí Hon (Tiny Hammer)` — Trụ gỗ sồi, bánh răng cam và cánh tay đòn búa gõ tự động mini.
-  - `G2: Xe Khoan Quặng (Ore Drill)` — Xe goòng 4 bánh sắt, giá đỡ xoắn ốc và mũi khoan quặng góc xiên.
-  - `G3: Lò Luyện Kim 3D (Coal Smelter)` — Chân kiềng 3 chạc hắc thiết đỡ nồi nấu kim loại bằng đồng rực sáng.
-  - `G4: Cối Xay Hơi Nước (Steam Mill)` — Bệ máy gang, bánh đà đồng khổng lồ, xi lanh piston và đồng hồ đo áp suất.
-  - `G5: Golem Thợ Rèn Tự Hành (Master Automaton)` — Robot Dwarven với chân trụ, giáp ngực, lõi ma thuật phát sáng, mũ visor, cầm kìm kẹp và búa tạ.
-- 📐 **Hiệu Ứng Thị Sai Chiều Sâu 3D (3D Camera Parallax):**
-  - Camera URP tự động xoay nghiêng mượt mà theo tọa độ chuột (`CameraParallax3D.cs`), tôn lên độ sâu không gian 3 chiều và bóng đổ thực của xưởng rèn.
+---
+
+## ✨ 2. Tính Năng Nổi Bật & Đột Phá Đồ Họa 3D AAA
+
+- 🏛️ **Mô Hình Hóa 3D Thuần Bản Địa (Native Wavefront .OBJ Modeling - `ForgeObjModelGenerator.cs`):**
+  - **Đe Rèn Dwarven Anvil (`Anvil_Dwarven.obj`):** Thân đe đúc gang dáng London cong thanh thoát, sừng vuốt nhọn ngang, gót đe vuông, đai sắt ôm thân cây sồi 24 cạnh và thỏi phôi kiếm thần binh rực lửa (`Hot_Ingot`).
+  - **Lò Nung Vòm Đá Hoa Cương (`Furnace_Dwarven.obj`):** Bệ đá xếp khối, trụ vòm đá hoa cương chạm khắc, nón hút khói hình chóp bát giác dập đinh tán, ống khói vương miện sắt kèm bễ thổi da, xô nước tôi và củi khô.
+  - **Búa Rèn Thợ Cả (`Hammer_Dwarven.obj`):** Cán gỗ sồi dài 0.54m, chuôi bịt đồng chạm khắc, đầu búa bát giác hắc thiết và hai mặt đập tôi thép Damascus sáng bóng.
+- 🎨 **Chất Liệu PBR Đỉnh Cao (HD Procedural Textures - `ForgeTextureGenerator.cs`):**
+  - 9 bộ PBR maps độ phân giải cao: Thép Damascus xoáy vân lượn sóng (`Tex_Damascus_Steel.png`), sắt đập búa xù xì (`Tex_Hammered_Dark_Iron.png`), đá hoa cương chạm viền (`Tex_Stone_Bricks.png`), than đỏ rực (`Tex_Burning_Embers.png`), vỏ gỗ sồi cổ thụ (`Tex_Oak_Stump.png`), đồng thau đánh bóng (`Tex_Polished_Bronze.png`).
+- 💡 **Chiếu Sáng Trilight, Reflection Probe & Lửa Bập Bùng (Cinematic URP Lighting):**
+  - **Trilight Ambient & Realtime Reflection Probe:** Khử triệt để hiện tượng kim loại bị đen xì, mang lại ánh phản quang kim loại sâu thẳm chân thực.
+  - **Lửa Lò Bập Bùng Perlin Noise (`FurnaceFlickerLight.cs`):** Ngọn lửa lò URP Point Light dao động tần số tự nhiên kèm độ biến thiên nhiệt màu từ vàng cam ấm áp đến đỏ rực.
+  - **Hạt Tàn Tro Bay Lơ Lửng (`PS_AmbientEmbers`):** Hàng chục đốm than đỏ và tàn tro phát quang bồng bềnh trong không gian xưởng rèn, tạo chiều sâu thị giác điện ảnh.
+- ⚙️ **Hoạt Họa Cơ Khí Tự Động 3D (Procedural Mechanical Rigging - `MachineAnimator3D.cs`):**
+  - `G1: Búa Tí Hon` — Nhịp vung đập cơ học răng cưa kèm độ nảy giật đàn hồi.
+  - `G2: Cúi Đào Quặng` — Mũi khoan kim cương xoay tròn tốc độ cao kèm rung chấn trục dọc.
+  - `G3: Lò Than Tự Đun` — Nồi luyện kim loại đồng dao động bập bùng theo chu kỳ sủi bọt.
+  - `G4: Cối Xay Kim` — Bánh đà 8 nan xoay liên tục kết hợp trục piston chuyển động tịnh tiến ngược pha.
+  - `G5: Robot Thợ Cả` — Golem tự hành mô phỏng nhịp thở hữu cơ, cánh tay nâng búa và lõi ngực phát sáng dao động.
+- 🔨 **Tương Tác Đe Rèn 3D & Búa Rèn Động (`HammerVisual3D.cs`):**
+  - Búa rèn tự động vung đập giáng xuống đe `CLANG!` kèm độ nảy đàn hồi (*rebound damping*) và tia lửa phát sáng mỗi lần người chơi nhấp chuột.
+- 📐 **Hiệu Ứng Thị Sai Chiều Sâu 3D (`CameraParallax3D.cs`):**
+  - Camera URP tự động xoay nghiêng mượt mà theo tọa độ chuột, tôn lên độ sâu không gian 3 chiều và bóng đổ mềm thực tế.
 - ⚒️ **Hệ Thống Nâng Cấp Búa Rèn & Lò Nung (Tools & Forge Upgrades):**
   - **Búa Rèn Thần Binh (`UP_HAMMER`):** Gia tăng uy lực mỗi cú đập (*Tap Power*), mở rộng sản lượng quặng khai thác tức thời.
   - **Lò Nung Nhiệt Hạch (`UP_FURNACE`):** Tăng theo % toàn bộ tổng sản lượng công xưởng + Cường hóa ánh sáng Point Light 3D rực lửa theo cấp độ.

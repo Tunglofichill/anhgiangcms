@@ -92,6 +92,14 @@ Gemini 3.8 đóng vai trò Kỹ sư trưởng (*Lead Software Engineer*). Mô h�
      * **Interactive 3D Hammer (`HammerVisual3D.cs`):** Búa rèn 3D lơ lửng với cán gỗ bọc vải, vòng chụp kim loại và đầu búa thép bát giác. Tích hợp thuật toán chuyển động vật lý đàn hồi (*harmonic rebound damping*) và idle breathing, vung giáng xuống đe `CLANG!` mỗi khi nhấp chuột.
      * **5 Dây chuyền Máy móc 3D (G1..G5):** Thiết kế mô hình cơ khí chuyên biệt (G1: Búa dập tay đòn; G2: Xe goòng 4 bánh và mũi khoan xoắn; G3: Nồi nấu kim loại đồng trên kiềng 3 chân; G4: Bánh đà hơi nước và piston áp lực; G5: Golem thợ rèn Dwarven cầm kìm búa với lõi ngực ma thuật rực sáng).
      * **Thị sai Camera 3D (`CameraParallax3D.cs`):** Tự động điều chỉnh góc xoay nghiêng và độ lệch của Camera URP theo chuyển động chuột, làm nổi bật chiều sâu không gian 3 chiều và hệ thống đổ bóng mềm (Soft Shadows).
+7. **Đột phá Kỹ thuật Đồ họa 3D AAA (Native Wavefront .OBJ Pipeline, Procedural PBR Textures & Live Rigging):**
+   - Nhằm nâng tầm mỹ thuật xưởng rèn từ dạng khối cơ bản lên chuẩn chất lượng game 3D điện ảnh (*AAA Visual Standard*), tác giả và Gemini 3.8 đã thiết lập chuỗi công cụ tự động hóa toàn diện:
+     * **Bộ Sinh Mô Hình 3D Thuần Bản Địa (`ForgeObjModelGenerator.cs`):** Tự động tạo sinh các file mô hình Wavefront `.obj` chuẩn hóa (`Anvil_Dwarven.obj`, `Furnace_Dwarven.obj`, `Hammer_Dwarven.obj`) với đầy đủ vector pháp tuyến đỉnh (*vertex normals*), tọa độ trải phẳng UV (*seamless UV mapping*), và phân vùng đa nhóm bề mặt (*submesh groups*) gán độc lập các chất liệu PBR.
+     * **Bộ Sinh Texture PBR Thủ Tục (`ForgeTextureGenerator.cs`):** Tự động tổng hợp 9 bộ map đồ họa độ phân giải cao bằng thuật toán toán học (vân thép Damascus xoáy sóng, bề mặt hắc thiết đập búa, gạch đá hoa cương xẻ rãnh, than lửa đỏ rực, vỏ sồi già 24 cạnh, đồng thau đánh bóng).
+     * **Chiếu Sáng Trilight & Realtime Reflection Probe:** Thiết lập hệ thống ánh sáng 3 vùng (Trilight Ambient) kết hợp Reflection Probe thời gian thực, khử triệt để hiện tượng kim loại bị đen bóng râm, mang lại ánh phản quang kim loại và độ tương phản điện ảnh rực rỡ.
+     * **Lửa Lò Bập Bùng Perlin Noise (`FurnaceFlickerLight.cs`):** Tính toán độ rung dao động ngẫu nhiên theo sóng Perlin kết hợp dịch chuyển nhiệt màu, tạo ngọn lửa lò sống động như thật.
+     * **Hoạt Họa Cơ Khí Tự Động 3D (`MachineAnimator3D.cs`):** Diễn hoạt thời gian thực 5 cỗ máy G1..G5 (búa đập răng cưa, khoan xoắn rung trục, nồi luyện đồng sôi bập bùng, bánh đà piston ngược pha, nhịp thở hữu cơ của golem thợ rèn).
+     * **Hạt Tàn Tro Bay Lơ Lửng (`PS_AmbientEmbers`):** Tích hợp hệ thống hạt tàn tro và đốm lửa bồng bềnh trong không khí, hoàn thiện bầu không khí huyền ảo của công xưởng thần binh.
 
 ```csharp
 // Trích đoạn mã nguồn đóng gói chuẩn Unity 6 trong ForgeBuildTools.cs:
